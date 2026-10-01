@@ -5,7 +5,7 @@ services:
     image: postgres:16-alpine
     container_name: controle_financeiro_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: adminpassword
