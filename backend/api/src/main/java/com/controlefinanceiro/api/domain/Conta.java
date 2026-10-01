@@ -1,14 +1,32 @@
 package com.controlefinanceiro.api.domain;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
 import java.math.BigDecimal;
 
+@Entity
+@Table(name = "contas")
 public class Conta {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String nome;
-    private BigDecimal saldo; // Usamos BigDecimal para calculos mais aproximados
-    private Usuario usuario; // Aqui criamos o vínculo! A conta pertence a um Usuário.
 
+    private String nome;
+
+    private BigDecimal saldo;
+
+    @ManyToOne //(Muitos para um ) 1 usuario pode ter varias contas mas uma conta so pode pertencer a 1 usuario
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private Usuario usuario;
+
+    // O JPA exige o construtor vazio
     public Conta() {
     }
 
