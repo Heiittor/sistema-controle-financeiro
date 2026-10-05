@@ -1,8 +1,12 @@
 package com.controlefinanceiro.api.domain;
 
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -10,8 +14,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.Objects;
 
 @Entity
 @Table(name = "transacoes")
@@ -21,74 +26,76 @@ public class Transacao {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, length = 255)
     private String descricao;
-    private BigDecimal valor;
+
+    @Embedded
+    @AttributeOverride(name = "valor",
+            column = @Column(name = "valor", nullable = false, precision = 19, scale = 2))
+    private Dinheiro valor;
+
+    @Column(nullable = false)
     private LocalDate data;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
     private TipoTransacao tipo;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "conta_id", nullable = false)
     private Conta conta;
 
-    public Transacao() {
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "categoria_id", nullable = false)
+    private Categoria categoria;
+
+    @Column(name = "criado_em", insertable = false, updatable = false)
+    private OffsetDateTime criadoEm;
+
+    // Exigido pelo JPA.
+    protected Transacao() {
     }
 
-    public Transacao(Long id, String descricao, BigDecimal valor, LocalDate data, TipoTransacao tipo, Conta conta) {
-        this.id = id;
-        this.descricao = descricao;
+    // Sem "public": só a Conta (mesmo pacote) cria transações.
+    Transacao(Conta conta, TipoTransacao tipo, String descricao, Dinheiro valor,
+              LocalDate data, Categoria categoria) {
+        if (conta == null || tipo == null || data == null || categoria == null) {
+            throw new IllegalArgumentException("Conta, tipo, data e categoria são obrigatórios.");
+        }
+        if (valor == null || valor.ehZero()) {
+            throw new IllegalArgumentException("O valor da transação deve ser maior que zero.");
+        }
+        if (categoria.getTipo() != tipo) {
+            throw new IllegalArgumentException("A categoria deve ser do mesmo tipo da transação.");
+        }
+        if (!Objects.equals(categoria.getUsuario().getId(), conta.getUsuario().getId())) {
+            throw new IllegalArgumentException("A categoria não pertence ao dono da conta.");
+        }
+        this.conta = conta;
+        this.tipo = tipo;
+        this.descricao = normalizarDescricao(descricao);
         this.valor = valor;
         this.data = data;
-        this.tipo = tipo;
-        this.conta = conta;
+        this.categoria = categoria;
     }
 
-    public Long getId() {
-        return id;
+    private static String normalizarDescricao(String descricao) {
+        if (descricao == null || descricao.isBlank()) {
+            throw new IllegalArgumentException("A descrição da transação é obrigatória.");
+        }
+        String limpa = descricao.trim();
+        if (limpa.length() > 255) {
+            throw new IllegalArgumentException("A descrição deve ter no máximo 255 caracteres.");
+        }
+        return limpa;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getDescricao() {
-        return descricao;
-    }
-
-    public void setDescricao(String descricao) {
-        this.descricao = descricao;
-    }
-
-    public BigDecimal getValor() {
-        return valor;
-    }
-
-    public void setValor(BigDecimal valor) {
-        this.valor = valor;
-    }
-
-    public LocalDate getData() {
-        return data;
-    }
-
-    public void setData(LocalDate data) {
-        this.data = data;
-    }
-
-    public TipoTransacao getTipo() {
-        return tipo;
-    }
-
-    public void setTipo(TipoTransacao tipo) {
-        this.tipo = tipo;
-    }
-
-    public Conta getConta() {
-        return conta;
-    }
-
-    public void setConta(Conta conta) {
-        this.conta = conta;
-    }
+    public Long getId() { return id; }
+    public String getDescricao() { return descricao; }
+    public Dinheiro getValor() { return valor; }
+    public LocalDate getData() { return data; }
+    public TipoTransacao getTipo() { return tipo; }
+    public Conta getConta() { return conta; }
+    public Categoria getCategoria() { return categoria; }
+    public OffsetDateTime getCriadoEm() { return criadoEm; }
 }

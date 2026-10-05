@@ -12,6 +12,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 import java.time.OffsetDateTime;
 
@@ -65,6 +67,18 @@ public class Conta {
             throw new IllegalStateException("Saldo insuficiente.");
         }
         this.saldo = this.saldo.subtrair(valor);
+    }
+
+    public Transacao registrarReceita(String descricao, Dinheiro valor, LocalDate data, Categoria categoria) {
+        Transacao transacao = new Transacao(this, TipoTransacao.RECEITA, descricao, valor, data, categoria);
+        creditar(valor);
+        return transacao;
+    }
+
+    public Transacao registrarDespesa(String descricao, Dinheiro valor, LocalDate data, Categoria categoria) {
+        Transacao transacao = new Transacao(this, TipoTransacao.DESPESA, descricao, valor, data, categoria);
+        debitar(valor);
+        return transacao;
     }
 
     public void renomear(String novoNome) {
