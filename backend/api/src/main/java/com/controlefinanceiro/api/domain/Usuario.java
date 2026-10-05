@@ -7,6 +7,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import java.util.Locale;
+
 @Entity
 @Table(name = "usuarios")
 public class Usuario {
@@ -15,29 +17,63 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String nome;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String senha;
 
-    // O JPA exige um construtor vazio para conseguir instanciar a classe nos bastidores
-    public Usuario() {
+    // Exigido pelo JPA. protected: o resto do código não cria usuário vazio.
+    protected Usuario() {
     }
 
-    // Getters e Setters (Para permitir que o Spring e outras classes leiam e alterem os dados)
+    // IMPORTANTE: única porta de criação. Dado inválido = usuário não nasce.
+    public Usuario(String nome, String email, String senha) {
+        this.nome = normalizarNome(nome);
+        this.email = normalizarEmail(email);
+        this.senha = exigirSenha(senha);
+    }
+
+    private static String normalizarNome(String nome) {
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException("O nome do usuário é obrigatório.");
+        }
+        String limpo = nome.trim();
+        if (limpo.length() > 255) {
+            throw new IllegalArgumentException("O nome deve ter no máximo 255 caracteres.");
+        }
+        return limpo;
+    }
+
+    // IMPORTANTE: minúsculas e sem espaços, para "A@x.com" e "a@x.com" serem o mesmo e-mail.
+    private static String normalizarEmail(String email) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("O e-mail é obrigatório.");
+        }
+        String limpo = email.trim().toLowerCase(Locale.ROOT);
+        int arroba = limpo.indexOf('@');
+        if (arroba < 1 || arroba == limpo.length() - 1 || limpo.indexOf('@', arroba + 1) != -1) {
+            throw new IllegalArgumentException("O e-mail é inválido.");
+        }
+        if (limpo.length() > 255) {
+            throw new IllegalArgumentException("O e-mail deve ter no máximo 255 caracteres.");
+        }
+        return limpo;
+    }
+
+    // Por enquanto texto puro. Na Fase 7 este campo passa a guardar o HASH da senha.
+    private static String exigirSenha(String senha) {
+        if (senha == null || senha.isBlank()) {
+            throw new IllegalArgumentException("A senha é obrigatória.");
+        }
+        return senha;
+    }
+
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
     public String getNome() { return nome; }
-    public void setNome(String nome) { this.nome = nome; }
-
     public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
     public String getSenha() { return senha; }
-    public void setSenha(String senha) { this.senha = senha; }
 }
