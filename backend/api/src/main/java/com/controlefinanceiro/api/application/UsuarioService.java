@@ -4,6 +4,7 @@ import com.controlefinanceiro.api.domain.Usuario;
 import com.controlefinanceiro.api.infrastructure.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.controlefinanceiro.api.domain.exception.ConflitoException;
 
 @Service
 public class UsuarioService {
@@ -22,7 +23,8 @@ public class UsuarioService {
 
         // Checagem amigável. O UNIQUE do banco continua sendo a garantia final.
         if (usuarioRepository.existsByEmail(usuario.getEmail())) {
-            throw new IllegalArgumentException("Este e-mail já está em uso.");
+            // IMPORTANTE: ConflitoException (e não IllegalArgumentException) é o que faz a API responder 409.
+            throw new ConflitoException("Este e-mail já está em uso.");
         }
 
         // Fase 7: aqui a senha será trocada pelo HASH antes de salvar.
