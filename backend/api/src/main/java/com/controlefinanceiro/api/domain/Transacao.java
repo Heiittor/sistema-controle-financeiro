@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -60,16 +61,16 @@ public class Transacao {
     Transacao(Conta conta, TipoTransacao tipo, String descricao, Dinheiro valor,
               LocalDate data, Categoria categoria) {
         if (conta == null || tipo == null || data == null || categoria == null) {
-            throw new IllegalArgumentException("Conta, tipo, data e categoria são obrigatórios.");
+            throw new RegraDeNegocioException("Conta, tipo, data e categoria são obrigatórios.");
         }
         if (valor == null || valor.ehZero()) {
-            throw new IllegalArgumentException("O valor da transação deve ser maior que zero.");
+            throw new RegraDeNegocioException("O valor da transação deve ser maior que zero.");
         }
         if (categoria.getTipo() != tipo) {
-            throw new IllegalArgumentException("A categoria deve ser do mesmo tipo da transação.");
+            throw new RegraDeNegocioException("A categoria deve ser do mesmo tipo da transação.");
         }
         if (!Objects.equals(categoria.getUsuario().getId(), conta.getUsuario().getId())) {
-            throw new IllegalArgumentException("A categoria não pertence ao dono da conta.");
+            throw new RegraDeNegocioException("A categoria não pertence ao dono da conta.");
         }
         this.conta = conta;
         this.tipo = tipo;
@@ -81,11 +82,11 @@ public class Transacao {
 
     private static String normalizarDescricao(String descricao) {
         if (descricao == null || descricao.isBlank()) {
-            throw new IllegalArgumentException("A descrição da transação é obrigatória.");
+            throw new RegraDeNegocioException("A descrição da transação é obrigatória.");
         }
         String limpa = descricao.trim();
         if (limpa.length() > 255) {
-            throw new IllegalArgumentException("A descrição deve ter no máximo 255 caracteres.");
+            throw new RegraDeNegocioException("A descrição deve ter no máximo 255 caracteres.");
         }
         return limpa;
     }
