@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 
 import java.time.OffsetDateTime;
 
@@ -52,18 +53,18 @@ public class Categoria {
 
     private static String normalizarNome(String nome) {
         if (nome == null || nome.isBlank()) {
-            throw new IllegalArgumentException("O nome da categoria é obrigatório.");
+            throw new RegraDeNegocioException("O nome da categoria é obrigatório.");
         }
         String limpo = nome.trim();
         if (limpo.length() > 100) {
-            throw new IllegalArgumentException("O nome da categoria deve ter no máximo 100 caracteres.");
+            throw new RegraDeNegocioException("O nome da categoria deve ter no máximo 100 caracteres.");
         }
         return limpo;
     }
 
     private static <T> T exigir(T valor, String mensagem) {
         if (valor == null) {
-            throw new IllegalArgumentException(mensagem);
+            throw new RegraDeNegocioException(mensagem);
         }
         return valor;
     }
