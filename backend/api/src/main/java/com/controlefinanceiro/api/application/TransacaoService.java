@@ -9,6 +9,7 @@ import com.controlefinanceiro.api.infrastructure.ContaRepository;
 import com.controlefinanceiro.api.infrastructure.TransacaoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
 
 import java.time.LocalDate;
 
@@ -51,15 +52,16 @@ public class TransacaoService {
         return gravar(conta, transacao);
     }
 
-    // IMPORTANTE: busca sempre com o dono. Conta de outro usuário = "não encontrada".
+
+    // IMPORTANTE: busca sempre com o dono. Conta de outro usuário = 404, igual a "não existe".
     private Conta buscarConta(Long usuarioId, Long contaId) {
         return contaRepository.findByIdAndUsuarioId(contaId, usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Conta não encontrada."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Conta não encontrada."));
     }
 
     private Categoria buscarCategoria(Long usuarioId, Long categoriaId) {
         return categoriaRepository.findByIdAndUsuarioId(categoriaId, usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Categoria não encontrada."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria não encontrada."));
     }
 
     // Grava o saldo novo e a transação dentro da mesma transação do banco.
