@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 
 import java.util.Locale;
 
@@ -39,11 +40,11 @@ public class Usuario {
 
     private static String normalizarNome(String nome) {
         if (nome == null || nome.isBlank()) {
-            throw new IllegalArgumentException("O nome do usuário é obrigatório.");
+            throw new RegraDeNegocioException("O nome do usuário é obrigatório.");
         }
         String limpo = nome.trim();
         if (limpo.length() > 255) {
-            throw new IllegalArgumentException("O nome deve ter no máximo 255 caracteres.");
+            throw new RegraDeNegocioException("O nome deve ter no máximo 255 caracteres.");
         }
         return limpo;
     }
@@ -51,15 +52,15 @@ public class Usuario {
     // IMPORTANTE: minúsculas e sem espaços, para "A@x.com" e "a@x.com" serem o mesmo e-mail.
     private static String normalizarEmail(String email) {
         if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("O e-mail é obrigatório.");
+            throw new RegraDeNegocioException("O e-mail é obrigatório.");
         }
         String limpo = email.trim().toLowerCase(Locale.ROOT);
         int arroba = limpo.indexOf('@');
         if (arroba < 1 || arroba == limpo.length() - 1 || limpo.indexOf('@', arroba + 1) != -1) {
-            throw new IllegalArgumentException("O e-mail é inválido.");
+            throw new RegraDeNegocioException("O e-mail é inválido.");
         }
         if (limpo.length() > 255) {
-            throw new IllegalArgumentException("O e-mail deve ter no máximo 255 caracteres.");
+            throw new RegraDeNegocioException("O e-mail deve ter no máximo 255 caracteres.");
         }
         return limpo;
     }
@@ -67,11 +68,10 @@ public class Usuario {
     // Por enquanto texto puro. Na Fase 7 este campo passa a guardar o HASH da senha.
     private static String exigirSenha(String senha) {
         if (senha == null || senha.isBlank()) {
-            throw new IllegalArgumentException("A senha é obrigatória.");
+            throw new RegraDeNegocioException("A senha é obrigatória.");
         }
         return senha;
     }
-
     public Long getId() { return id; }
     public String getNome() { return nome; }
     public String getEmail() { return email; }
