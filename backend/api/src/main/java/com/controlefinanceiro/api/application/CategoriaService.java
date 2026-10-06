@@ -7,6 +7,9 @@ import com.controlefinanceiro.api.infrastructure.CategoriaRepository;
 import com.controlefinanceiro.api.infrastructure.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.controlefinanceiro.api.domain.exception.ConflitoException;
+import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
+
 
 import java.util.List;
 
@@ -25,7 +28,7 @@ public class CategoriaService {
     @Transactional
     public Categoria criar(Long usuarioId, String nome, TipoTransacao tipo) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado."));
 
         // IMPORTANTE: criar primeiro. O domínio limpa o nome (trim) ANTES da checagem de duplicidade.
         Categoria categoria = new Categoria(nome, tipo, usuario);
@@ -33,7 +36,8 @@ public class CategoriaService {
         // Checagem amigável. O UNIQUE do banco continua sendo a garantia final.
         if (categoriaRepository.existsByUsuarioIdAndTipoAndNomeIgnoreCase(
                 usuarioId, categoria.getTipo(), categoria.getNome())) {
-            throw new IllegalArgumentException("Você já tem uma categoria com esse nome e tipo.");
+            // IMPORTANTE: ConflitoException é o que faz a API responder 409.
+            throw new ConflitoException("Você já tem uma categoria com esse nome e tipo.");
         }
 
         return categoriaRepository.save(categoria);
