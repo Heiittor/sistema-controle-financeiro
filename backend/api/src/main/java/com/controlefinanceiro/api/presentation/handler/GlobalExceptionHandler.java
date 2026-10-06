@@ -1,5 +1,8 @@
 package com.controlefinanceiro.api.presentation.handler;
 
+import com.controlefinanceiro.api.domain.exception.ConflitoException;
+import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
+import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 import com.controlefinanceiro.api.presentation.dto.ErroResponse;
 import com.controlefinanceiro.api.presentation.dto.ErroResponse.CampoErro;
 import org.slf4j.Logger;
@@ -47,5 +50,29 @@ public class GlobalExceptionHandler {
         ErroResponse corpo = ErroResponse.de(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(), "Erro interno. Tente novamente mais tarde.");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(corpo);
+
     }
+
+    // 404: não existe ou não é do usuário (mesma resposta, de propósito).
+    @ExceptionHandler(RecursoNaoEncontradoException.class)
+    public ResponseEntity<ErroResponse> tratarNaoEncontrado(RecursoNaoEncontradoException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErroResponse.de(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
+    }
+
+    // 409: conflito com algo que já existe (duplicado).
+    @ExceptionHandler(ConflitoException.class)
+    public ResponseEntity<ErroResponse> tratarConflito(ConflitoException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErroResponse.de(HttpStatus.CONFLICT.value(), ex.getMessage()));
+    }
+
+    // 422: dados bem formados, mas o negócio não permite (ex.: saldo insuficiente).
+    @ExceptionHandler(RegraDeNegocioException.class)
+    public ResponseEntity<ErroResponse> tratarRegraDeNegocio(RegraDeNegocioException ex) {
+        return ResponseEntity.unprocessableEntity()
+                .body(ErroResponse.de(HttpStatus.UNPROCESSABLE_ENTITY.value(), ex.getMessage()));
+    }
+
 }
+
