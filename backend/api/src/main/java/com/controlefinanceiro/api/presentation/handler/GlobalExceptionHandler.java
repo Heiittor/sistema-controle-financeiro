@@ -1,0 +1,51 @@
+package com.controlefinanceiro.api.presentation.handler;
+
+import com.controlefinanceiro.api.presentation.dto.ErroResponse;
+import com.controlefinanceiro.api.presentation.dto.ErroResponse.CampoErro;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.List;
+
+// IMPORTANTE: observa todos os Controllers. Erro tratado aqui, em um lugar só.
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    // Validação do DTO falhou (@Valid): devolve 400 apontando cada campo errado.
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErroResponse> tratarValidacao(MethodArgumentNotValidException ex) {
+        List<CampoErro> campos = ex.getBindingResult().getFieldErrors().stream()
+                .map(erro -> new CampoErro(erro.getField(), erro.getDefaultMessage()))
+                .toList();
+
+        ErroResponse corpo = ErroResponse.deValidacao(
+                HttpStatus.BAD_REQUEST.value(), "Dados inválidos.", campos);
+        return ResponseEntity.badRequest().body(corpo);
+    }
+
+    // JSON quebrado, vazio ou com tipo errado. Mensagem fixa: não repetimos o texto interno do Jackson.
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErroResponse> tratarJsonIlegivel(HttpMessageNotReadableException ex) {
+        ErroResponse corpo = ErroResponse.de(
+                HttpStatus.BAD_REQUEST.value(), "Corpo da requisição inválido ou ilegível.");
+        return ResponseEntity.badRequest().body(corpo);
+    }
+
+    // IMPORTANTE: rede de segurança. O detalhe vai só para o LOG; o cliente recebe mensagem genérica.
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErroResponse> tratarInesperado(Exception ex) {
+        log.error("Erro inesperado", ex);
+
+        ErroResponse corpo = ErroResponse.de(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), "Erro interno. Tente novamente mais tarde.");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(corpo);
+    }
+}
