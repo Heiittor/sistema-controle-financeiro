@@ -6,6 +6,8 @@ import com.controlefinanceiro.api.infrastructure.ContaRepository;
 import com.controlefinanceiro.api.infrastructure.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.controlefinanceiro.api.domain.exception.ConflitoException;
+import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
 
 import java.util.List;
 
@@ -24,14 +26,15 @@ public class ContaService {
     @Transactional
     public Conta criar(Long usuarioId, String nome) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado."));
 
         // IMPORTANTE: criar primeiro. O domínio limpa o nome e define o saldo em zero.
         Conta conta = new Conta(nome, usuario);
 
         // Checagem amigável. O UNIQUE do banco continua sendo a garantia final.
         if (contaRepository.existsByUsuarioIdAndNomeIgnoreCase(usuarioId, conta.getNome())) {
-            throw new IllegalArgumentException("Você já tem uma conta com esse nome.");
+            // IMPORTANTE: ConflitoException é o que faz a API responder 409.
+            throw new ConflitoException("Você já tem uma conta com esse nome.");
         }
 
         return contaRepository.save(conta);
