@@ -12,8 +12,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+
+import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 
 import java.time.OffsetDateTime;
 
@@ -50,7 +53,7 @@ public class Conta {
     public Conta(String nome, Usuario usuario) {
         this.nome = normalizarNome(nome);
         if (usuario == null) {
-            throw new IllegalArgumentException("O usuário da conta é obrigatório.");
+            throw new RegraDeNegocioException("O usuário da conta é obrigatório.");
         }
         this.usuario = usuario;
         this.saldo = Dinheiro.ZERO;
@@ -64,7 +67,8 @@ public class Conta {
     public void debitar(Dinheiro valor) {
         exigirValorPositivo(valor);
         if (valor.maiorQue(this.saldo)) {
-            throw new IllegalStateException("Saldo insuficiente.");
+            // IMPORTANTE: é aqui que mora a regra do saldo insuficiente. Nada foi alterado ainda.
+            throw new RegraDeNegocioException("Saldo insuficiente.");
         }
         this.saldo = this.saldo.subtrair(valor);
     }
@@ -87,24 +91,38 @@ public class Conta {
 
     private static void exigirValorPositivo(Dinheiro valor) {
         if (valor == null || valor.ehZero()) {
-            throw new IllegalArgumentException("O valor da operação deve ser maior que zero.");
+            throw new RegraDeNegocioException("O valor da operação deve ser maior que zero.");
         }
     }
 
     private static String normalizarNome(String nome) {
         if (nome == null || nome.isBlank()) {
-            throw new IllegalArgumentException("O nome da conta é obrigatório.");
+            throw new RegraDeNegocioException("O nome da conta é obrigatório.");
         }
         String limpo = nome.trim();
         if (limpo.length() > 100) {
-            throw new IllegalArgumentException("O nome da conta deve ter no máximo 100 caracteres.");
+            throw new RegraDeNegocioException("O nome da conta deve ter no máximo 100 caracteres.");
         }
         return limpo;
     }
 
-    public Long getId() { return id; }
-    public String getNome() { return nome; }
-    public Dinheiro getSaldo() { return saldo; }
-    public Usuario getUsuario() { return usuario; }
-    public OffsetDateTime getCriadoEm() { return criadoEm; }
+    public Long getId() {
+        return id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public Dinheiro getSaldo() {
+        return saldo;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public OffsetDateTime getCriadoEm() {
+        return criadoEm;
+    }
 }
