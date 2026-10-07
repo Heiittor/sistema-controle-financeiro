@@ -1,5 +1,6 @@
 package com.controlefinanceiro.api.domain;
 
+import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -21,17 +22,17 @@ class DinheiroTest {
 
     @Test
     void deveRejeitarValorNulo() {
-        assertThrows(IllegalArgumentException.class, () -> new Dinheiro(null));
+        assertThrows(RegraDeNegocioException.class, () -> new Dinheiro(null));
     }
 
     @Test
     void deveRejeitarValorNegativo() {
-        assertThrows(IllegalArgumentException.class, () -> new Dinheiro(new BigDecimal("-0.01")));
+        assertThrows(RegraDeNegocioException.class, () -> new Dinheiro(new BigDecimal("-0.01")));
     }
 
     @Test
     void deveRejeitarMaisDeDuasCasasDecimais() {
-        assertThrows(IllegalArgumentException.class, () -> new Dinheiro(new BigDecimal("10.005")));
+        assertThrows(RegraDeNegocioException.class, () -> new Dinheiro(new BigDecimal("10.005")));
     }
 
     @Test
@@ -46,7 +47,7 @@ class DinheiroTest {
         Dinheiro cinco = new Dinheiro(new BigDecimal("5"));
         Dinheiro dez = new Dinheiro(new BigDecimal("10"));
 
-        assertThrows(IllegalArgumentException.class, () -> cinco.subtrair(dez));
+        assertThrows(RegraDeNegocioException.class, () -> cinco.subtrair(dez));
     }
 
     @Test
