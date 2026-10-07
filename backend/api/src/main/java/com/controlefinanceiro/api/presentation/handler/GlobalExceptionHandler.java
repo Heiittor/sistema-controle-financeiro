@@ -14,6 +14,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.List;
 
@@ -81,6 +83,22 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErroResponse> tratarRotaInexistente(NoResourceFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ErroResponse.de(HttpStatus.NOT_FOUND.value(), "Recurso não encontrado."));
+    }
+
+    // Header obrigatório não enviado (ex.: X-Usuario-Id). Erro do cliente: 400.
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ErroResponse> tratarHeaderAusente(MissingRequestHeaderException ex) {
+        return ResponseEntity.badRequest().body(ErroResponse.de(
+                HttpStatus.BAD_REQUEST.value(),
+                "Cabeçalho obrigatório ausente: " + ex.getHeaderName() + "."));
+    }
+
+    // Valor com tipo errado (ex.: "abc" onde se espera número). Mensagem fixa, sem detalhes internos.
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErroResponse> tratarTipoInvalido(MethodArgumentTypeMismatchException ex) {
+        return ResponseEntity.badRequest().body(ErroResponse.de(
+                HttpStatus.BAD_REQUEST.value(),
+                "Valor inválido para o parâmetro '" + ex.getName() + "'."));
     }
 
 }
