@@ -13,6 +13,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
 
@@ -72,6 +73,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErroResponse> tratarRegraDeNegocio(RegraDeNegocioException ex) {
         return ResponseEntity.unprocessableEntity()
                 .body(ErroResponse.de(HttpStatus.UNPROCESSABLE_ENTITY.value(), ex.getMessage()));
+    }
+
+    // Rota ou arquivo que não existe (ex.: GET /, /favicon.ico). É 404, não 500.
+    // Sem log de erro: é ruído de navegador ou scanner, não falha do sistema.
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErroResponse> tratarRotaInexistente(NoResourceFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErroResponse.de(HttpStatus.NOT_FOUND.value(), "Recurso não encontrado."));
     }
 
 }
