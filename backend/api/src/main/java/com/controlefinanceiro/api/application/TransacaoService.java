@@ -10,11 +10,19 @@ import com.controlefinanceiro.api.infrastructure.TransacaoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
+import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
 
 @Service
 public class TransacaoService {
+
+    private static final int TAMANHO_MAXIMO_PAGINA = 100;
+    private static final int TAMANHO_PADRAO_PAGINA = 20;
 
     private final ContaRepository contaRepository;
     private final CategoriaRepository categoriaRepository;
@@ -68,5 +76,29 @@ public class TransacaoService {
     private Transacao gravar(Conta conta, Transacao transacao) {
         contaRepository.save(conta);
         return transacaoRepository.save(transacao);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Transacao> listar(Long usuarioId, Long contaId,
+                                  LocalDate inicio, LocalDate fim, int pagina, int tamanho) {
+        // IMPORTANTE: confirma que a conta é do usuário. Se não for, 404 (e não lista vazia).
+        buscarConta(usuarioId, contaId);
+
+        LocalDate hoje = LocalDate.now();
+        LocalDate de = inicio != null ? inicio : hoje.withDayOfMonth(1);
+        LocalDate ate = fim != null ? fim : hoje.withDayOfMonth(hoje.lengthOfMonth());
+        if (de.isAfter(ate)) {
+            throw new RegraDeNegocioException("A data inicial não pode ser posterior à data final.");
+        }
+
+        // IMPORTANTE: limita o tamanho da página para ninguém pedir milhões de linhas de uma vez.
+        int tamanhoSeguro = tamanho <= 0 ? TAMANHO_PADRAO_PAGINA : Math.min(tamanho, TAMANHO_MAXIMO_PAGINA);
+        int paginaSegura = Math.max(pagina, 0);
+
+        Pageable pageable = PageRequest.of(paginaSegura, tamanhoSeguro,
+                Sort.by(Sort.Order.desc("data"), Sort.Order.desc("id")));
+
+        return transacaoRepository.findByContaIdAndContaUsuarioIdAndDataBetween(
+                contaId, usuarioId, de, ate, pageable);
     }
 }
