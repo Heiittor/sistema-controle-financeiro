@@ -4,6 +4,7 @@ import com.controlefinanceiro.api.domain.Transacao;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.Repository;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 import java.time.LocalDate;
 import java.util.Optional;
@@ -20,6 +21,8 @@ public interface TransacaoRepository extends Repository<Transacao, Long> {
 
     // Histórico de UMA conta, num período, paginado.
     // Exige conta e dono: se a conta for de outro usuário, a lista vem vazia.
+    // IMPORTANTE: traz a categoria junto, num JOIN só. Evita 1 consulta extra por transação (N+1).
+    @EntityGraph(attributePaths = "categoria")
     Page<Transacao> findByContaIdAndContaUsuarioIdAndDataBetween(
             Long contaId, Long usuarioId, LocalDate inicio, LocalDate fim, Pageable pageable);
 }

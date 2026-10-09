@@ -14,10 +14,10 @@ public record TransacaoResponse(
         LocalDate data,
         TipoTransacao tipo,
         Long contaId,
-        Long categoriaId
+        Long categoriaId,
+        String categoriaNome
 ) {
 
-    // Único ponto de conversão Transacao -> JSON. O valor é desembrulhado do Dinheiro.
     public static TransacaoResponse de(Transacao transacao) {
         return new TransacaoResponse(
                 transacao.getId(),
@@ -26,6 +26,7 @@ public record TransacaoResponse(
                 transacao.getData(),
                 transacao.getTipo(),
                 transacao.getConta().getId(),
-                transacao.getCategoria().getId());
+                transacao.getCategoria().getId(),
+                transacao.getCategoria().getNome());
     }
 }
