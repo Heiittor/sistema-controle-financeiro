@@ -8,9 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -26,8 +26,8 @@ class BolaTest extends IntegracaoBase {
     @Autowired
     private JdbcTemplate jdbc;
 
-    private long usuarioA;
-    private long usuarioB;
+    private Sessao a;
+    private Sessao b;
     private long contaDeA;
     private long categoriaReceitaDeA;
     private long categoriaDespesaDeA;
@@ -35,72 +35,61 @@ class BolaTest extends IntegracaoBase {
 
     @BeforeEach
     void prepararCenario() throws Exception {
-        usuarioA = criarUsuario("Ana");
-        usuarioB = criarUsuario("Beto");
+        a = cadastrarELogar(mockMvc, "Ana");
+        b = cadastrarELogar(mockMvc, "Beto");
 
-        contaDeA = criarConta(usuarioA, "Nubank");
-        categoriaReceitaDeA = criarCategoria(usuarioA, "Salário", "RECEITA");
-        categoriaDespesaDeA = criarCategoria(usuarioA, "Alimentação", "DESPESA");
-        contaDeB = criarConta(usuarioB, "Itaú");
+        contaDeA = criar("/contas", a, "{\"nome\":\"Nubank\"}");
+        categoriaReceitaDeA = criar("/categorias", a, "{\"nome\":\"Salário\",\"tipo\":\"RECEITA\"}");
+        categoriaDespesaDeA = criar("/categorias", a, "{\"nome\":\"Alimentação\",\"tipo\":\"DESPESA\"}");
+        contaDeB = criar("/contas", b, "{\"nome\":\"Itaú\"}");
 
-        // A tem R$ 1000 na conta.
-        registrar(usuarioA, contaDeA, "receitas", categoriaReceitaDeA, "1000.00")
-                .andExpect(status().isCreated());
+        registrar(a, contaDeA, "receitas", categoriaReceitaDeA, "1000.00").andExpect(status().isCreated());
     }
 
     @Test
     void usuarioBNaoPodeRegistrarDespesaNaContaDeA() throws Exception {
-        registrar(usuarioB, contaDeA, "despesas", categoriaDespesaDeA, "10.00")
-                .andExpect(status().isNotFound());
-
+        registrar(b, contaDeA, "despesas", categoriaDespesaDeA, "10.00").andExpect(status().isNotFound());
         conferirContaDeAIntacta();
     }
 
     @Test
     void usuarioBNaoPodeRegistrarReceitaNaContaDeA() throws Exception {
-        registrar(usuarioB, contaDeA, "receitas", categoriaReceitaDeA, "500.00")
-                .andExpect(status().isNotFound());
-
+        registrar(b, contaDeA, "receitas", categoriaReceitaDeA, "500.00").andExpect(status().isNotFound());
         conferirContaDeAIntacta();
     }
 
     @Test
     void usuarioBNaoPodeLerOHistoricoDaContaDeA() throws Exception {
-        mockMvc.perform(get("/contas/{id}/transacoes", contaDeA)
-                        .header("X-Usuario-Id", usuarioB))
+        mockMvc.perform(get("/contas/{id}/transacoes", contaDeA).header("Authorization", bearer(b)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.mensagem").value("Conta não encontrada."));
     }
 
     @Test
     void usuarioBNaoPodeUsarACategoriaDeANaPropriaConta() throws Exception {
-        registrar(usuarioB, contaDeB, "despesas", categoriaDespesaDeA, "10.00")
+        registrar(b, contaDeB, "despesas", categoriaDespesaDeA, "10.00")
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.mensagem").value("Categoria não encontrada."));
     }
 
     @Test
     void usuarioBVeApenasOsProprioDadosNasListagens() throws Exception {
-        mockMvc.perform(get("/contas").header("X-Usuario-Id", usuarioB))
+        mockMvc.perform(get("/contas").header("Authorization", bearer(b)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].nome").value("Itaú"));
 
-        mockMvc.perform(get("/categorias").header("X-Usuario-Id", usuarioB))
+        mockMvc.perform(get("/categorias").header("Authorization", bearer(b)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }
 
     @Test
     void naoExistirELerDeOutroUsuarioTemAMesmaResposta() throws Exception {
-        // Conta inexistente e conta de outro usuário devem ser indistinguíveis (não vaza quais ids existem).
-        mockMvc.perform(get("/contas/{id}/transacoes", 999999999L)
-                        .header("X-Usuario-Id", usuarioB))
+        mockMvc.perform(get("/contas/{id}/transacoes", 999999999L).header("Authorization", bearer(b)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.mensagem").value("Conta não encontrada."));
     }
-
-    // ---- verificação no banco ----
 
     private void conferirContaDeAIntacta() {
         BigDecimal saldo = jdbc.queryForObject(
@@ -112,42 +101,20 @@ class BolaTest extends IntegracaoBase {
         assertEquals(1, transacoes);
     }
 
-    // ---- helpers que usam a própria API ----
-
-    private long criarUsuario(String nome) throws Exception {
-        String email = "bola-" + UUID.randomUUID() + "@teste.com";
-        String corpo = mockMvc.perform(post("/usuarios")
+    private long criar(String rota, Sessao sessao, String corpo) throws Exception {
+        String resposta = mockMvc.perform(post(rota)
+                        .header("Authorization", bearer(sessao))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"nome\":\"" + nome + "\",\"email\":\"" + email + "\",\"senha\":\"senha12345\"}"))
+                        .content(corpo))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        return ((Number) JsonPath.read(corpo, "$.id")).longValue();
+        return ((Number) JsonPath.read(resposta, "$.id")).longValue();
     }
 
-    private long criarConta(long usuario, String nome) throws Exception {
-        String corpo = mockMvc.perform(post("/contas")
-                        .header("X-Usuario-Id", usuario)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"nome\":\"" + nome + "\"}"))
-                .andExpect(status().isCreated())
-                .andReturn().getResponse().getContentAsString();
-        return ((Number) JsonPath.read(corpo, "$.id")).longValue();
-    }
-
-    private long criarCategoria(long usuario, String nome, String tipo) throws Exception {
-        String corpo = mockMvc.perform(post("/categorias")
-                        .header("X-Usuario-Id", usuario)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"nome\":\"" + nome + "\",\"tipo\":\"" + tipo + "\"}"))
-                .andExpect(status().isCreated())
-                .andReturn().getResponse().getContentAsString();
-        return ((Number) JsonPath.read(corpo, "$.id")).longValue();
-    }
-
-    private org.springframework.test.web.servlet.ResultActions registrar(
-            long usuario, long conta, String rota, long categoria, String valor) throws Exception {
+    private ResultActions registrar(Sessao sessao, long conta, String rota, long categoria, String valor)
+            throws Exception {
         return mockMvc.perform(post("/contas/{id}/{rota}", conta, rota)
-                .header("X-Usuario-Id", usuario)
+                .header("Authorization", bearer(sessao))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"categoriaId\":" + categoria + ",\"descricao\":\"Teste\",\"valor\":" + valor
                         + ",\"data\":\"2026-10-05\"}"));

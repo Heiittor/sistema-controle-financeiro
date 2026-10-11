@@ -11,7 +11,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -27,19 +26,17 @@ class FluxoFinanceiroTest extends IntegracaoBase {
     @Autowired
     private JdbcTemplate jdbc;
 
-    private long usuario;
+    private Sessao usuario;
     private long conta;
     private long categoriaReceita;
     private long categoriaDespesa;
 
     @BeforeEach
     void prepararCenario() throws Exception {
-        usuario = criar("/usuarios", null,
-                "{\"nome\":\"Ana\",\"email\":\"fluxo-" + UUID.randomUUID()
-                        + "@teste.com\",\"senha\":\"senha12345\"}");
-        conta = criar("/contas", usuario, "{\"nome\":\"Nubank\"}");
-        categoriaReceita = criar("/categorias", usuario, "{\"nome\":\"Salário\",\"tipo\":\"RECEITA\"}");
-        categoriaDespesa = criar("/categorias", usuario, "{\"nome\":\"Alimentação\",\"tipo\":\"DESPESA\"}");
+        usuario = cadastrarELogar(mockMvc, "Ana");
+        conta = criar("/contas", "{\"nome\":\"Nubank\"}");
+        categoriaReceita = criar("/categorias", "{\"nome\":\"Salário\",\"tipo\":\"RECEITA\"}");
+        categoriaDespesa = criar("/categorias", "{\"nome\":\"Alimentação\",\"tipo\":\"DESPESA\"}");
     }
 
     @Test
@@ -61,7 +58,6 @@ class FluxoFinanceiroTest extends IntegracaoBase {
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.mensagem").value("Saldo insuficiente."));
 
-        // IMPORTANTE: a recusa não deixa nada pela metade (nem saldo alterado, nem transação gravada).
         conferir("100.00", 1);
     }
 
@@ -89,7 +85,7 @@ class FluxoFinanceiroTest extends IntegracaoBase {
         registrar("despesas", categoriaDespesa, "20.00", "2026-10-02").andExpect(status().isCreated());
 
         mockMvc.perform(get("/contas/{id}/transacoes", conta)
-                        .header("X-Usuario-Id", usuario)
+                        .header("Authorization", bearer(usuario))
                         .param("inicio", "2026-10-01").param("fim", "2026-10-31")
                         .param("size", "2"))
                 .andExpect(status().isOk())
@@ -103,19 +99,17 @@ class FluxoFinanceiroTest extends IntegracaoBase {
     @Test
     void deveLimitarOTamanhoDaPaginaEValidarOPeriodo() throws Exception {
         mockMvc.perform(get("/contas/{id}/transacoes", conta)
-                        .header("X-Usuario-Id", usuario)
+                        .header("Authorization", bearer(usuario))
                         .param("inicio", "2026-10-01").param("fim", "2026-10-31")
                         .param("size", "5000"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.tamanho").value(100));
 
         mockMvc.perform(get("/contas/{id}/transacoes", conta)
-                        .header("X-Usuario-Id", usuario)
+                        .header("Authorization", bearer(usuario))
                         .param("inicio", "2026-10-31").param("fim", "2026-10-01"))
                 .andExpect(status().isUnprocessableEntity());
     }
-
-    // ---- verificação no banco ----
 
     private void conferir(String saldoEsperado, int transacoesEsperadas) {
         BigDecimal saldo = jdbc.queryForObject(
@@ -127,14 +121,11 @@ class FluxoFinanceiroTest extends IntegracaoBase {
         assertEquals(transacoesEsperadas, transacoes);
     }
 
-    // ---- helpers que usam a própria API ----
-
-    private long criar(String rota, Long usuarioId, String corpo) throws Exception {
-        var requisicao = post(rota).contentType(MediaType.APPLICATION_JSON).content(corpo);
-        if (usuarioId != null) {
-            requisicao.header("X-Usuario-Id", usuarioId);
-        }
-        String resposta = mockMvc.perform(requisicao)
+    private long criar(String rota, String corpo) throws Exception {
+        String resposta = mockMvc.perform(post(rota)
+                        .header("Authorization", bearer(usuario))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         return ((Number) JsonPath.read(resposta, "$.id")).longValue();
@@ -142,7 +133,7 @@ class FluxoFinanceiroTest extends IntegracaoBase {
 
     private ResultActions registrar(String rota, long categoria, String valor, String data) throws Exception {
         return mockMvc.perform(post("/contas/{id}/{rota}", conta, rota)
-                .header("X-Usuario-Id", usuario)
+                .header("Authorization", bearer(usuario))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"categoriaId\":" + categoria + ",\"descricao\":\"Teste\",\"valor\":" + valor
                         + ",\"data\":\"" + data + "\"}"));
