@@ -1,6 +1,7 @@
 package com.controlefinanceiro.api.presentation.handler;
 
 import com.controlefinanceiro.api.domain.exception.ConflitoException;
+import com.controlefinanceiro.api.domain.exception.CredenciaisInvalidasException;
 import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
 import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 import com.controlefinanceiro.api.presentation.dto.ErroResponse;
@@ -99,6 +100,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(ErroResponse.de(
                 HttpStatus.BAD_REQUEST.value(),
                 "Valor inválido para o parâmetro '" + ex.getName() + "'."));
+    }
+    // 401: login com e-mail ou senha errados. Mesma mensagem para os dois casos, de propósito.
+    @ExceptionHandler(CredenciaisInvalidasException.class)
+    public ResponseEntity<ErroResponse> tratarCredenciaisInvalidas(CredenciaisInvalidasException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ErroResponse.de(HttpStatus.UNAUTHORIZED.value(), ex.getMessage()));
     }
 
 }
