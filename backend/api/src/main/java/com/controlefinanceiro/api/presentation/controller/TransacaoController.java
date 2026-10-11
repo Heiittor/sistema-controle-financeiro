@@ -13,6 +13,12 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import com.controlefinanceiro.api.presentation.dto.PaginaResponse;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/contas/{contaId}")
@@ -47,5 +53,18 @@ public class TransacaoController {
         return TransacaoResponse.de(transacaoService.registrarDespesa(
                 usuarioId, contaId, request.categoriaId(), request.descricao(),
                 new Dinheiro(request.valor()), request.data()));
+    }
+    @GetMapping("/transacoes")
+    public PaginaResponse<TransacaoResponse> listar(
+            // TEMPORÁRIO: mesma ponte provisória do header.
+            @RequestHeader("X-Usuario-Id") Long usuarioId,
+            @PathVariable Long contaId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return PaginaResponse.de(
+                transacaoService.listar(usuarioId, contaId, inicio, fim, page, size),
+                TransacaoResponse::de);
     }
 }
