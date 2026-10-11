@@ -9,8 +9,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 // Base de todos os testes de integração: aplicação inteira + PostgreSQL real em container.
-@SpringBootTest
-@AutoConfigureMockMvc
+@SpringBootTest(properties = "app.jwt.secret=chave-falsa-apenas-para-testes-0123456789")@AutoConfigureMockMvc
 @Import(IntegracaoBase.ConfiguracaoContainer.class)
 public abstract class IntegracaoBase {
 
