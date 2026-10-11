@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 
@@ -106,6 +107,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErroResponse> tratarCredenciaisInvalidas(CredenciaisInvalidasException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ErroResponse.de(HttpStatus.UNAUTHORIZED.value(), ex.getMessage()));
+    }
+    // Corrida no UNIQUE: duas requisições passaram na checagem amigável e o banco barrou a segunda.
+    // Mensagem genérica: o texto da exceção revela constraint e SQL.
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErroResponse> tratarIntegridade(DataIntegrityViolationException ex) {
+        log.warn("Violação de integridade no banco: {}", ex.getMostSpecificCause().getMessage());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ErroResponse.de(
+                HttpStatus.CONFLICT.value(), "Já existe um registro com esses dados."));
     }
 
 }
