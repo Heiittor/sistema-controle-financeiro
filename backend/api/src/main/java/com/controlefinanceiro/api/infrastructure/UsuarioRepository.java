@@ -1,0 +1,12 @@
+package com.controlefinanceiro.api.infrastructure;
+
+import com.controlefinanceiro.api.domain.Usuario;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
+
+    // O Spring traduz isso para: SELECT count(*) > 0 FROM usuarios WHERE email = ?
+    boolean existsByEmail(String email);
+}
