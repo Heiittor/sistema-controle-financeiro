@@ -18,6 +18,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.dao.DataIntegrityViolationException;
+import com.controlefinanceiro.api.domain.exception.TentativasExcedidasException;
 
 import java.util.List;
 
@@ -116,6 +117,18 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ErroResponse.de(
                 HttpStatus.CONFLICT.value(), "Já existe um registro com esses dados."));
+    }
+    // 429: excesso de tentativas de login. Retry-After diz, em segundos, quando tentar de novo.
+    @ExceptionHandler(TentativasExcedidasException.class)
+    public ResponseEntity<ErroResponse> tratarTentativasExcedidas(TentativasExcedidasException ex) {
+        long segundos = ex.getSegundosParaLiberar();
+        long minutos = (segundos + 59) / 60; // arredonda para cima
+
+        String mensagem = "Muitas tentativas de login. Tente novamente em " + minutos + " minuto(s).";
+
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(segundos))
+                .body(ErroResponse.de(HttpStatus.TOO_MANY_REQUESTS.value(), mensagem));
     }
 
 }
