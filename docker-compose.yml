@@ -1,15 +1,13 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16-alpine
     container_name: controle_financeiro_db
     ports:
-      - "5433:5432"
+      - "${DB_PORT}:5432"
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: adminpassword
-      POSTGRES_DB: controle_financeiro
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
       - db_data:/var/lib/postgresql/data
 
