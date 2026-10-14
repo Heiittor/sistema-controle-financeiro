@@ -19,6 +19,7 @@ import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.dao.DataIntegrityViolationException;
 import com.controlefinanceiro.api.domain.exception.TentativasExcedidasException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.util.List;
 
@@ -129,6 +130,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                 .header("Retry-After", String.valueOf(segundos))
                 .body(ErroResponse.de(HttpStatus.TOO_MANY_REQUESTS.value(), mensagem));
+    }
+    // Duas operações alteraram a mesma conta ao mesmo tempo (@Version): a segunda perde e pode repetir.
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErroResponse> tratarConflitoDeVersao(ObjectOptimisticLockingFailureException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ErroResponse.de(
+                HttpStatus.CONFLICT.value(),
+                "A conta foi alterada por outra operação. Tente novamente."));
     }
 
 }
