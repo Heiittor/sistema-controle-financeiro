@@ -63,13 +63,12 @@ public class Transacao {
     protected Transacao() {
     }
 
-    // Sem "public": só a Conta (mesmo pacote) cria transações.
+    // Receita e despesa. Sem "public": só a Conta (mesmo pacote) cria transações.
     Transacao(Conta conta, TipoTransacao tipo, String descricao, Dinheiro valor,
               LocalDate data, Categoria categoria) {
         if (conta == null || tipo == null || data == null || categoria == null) {
             throw new RegraDeNegocioException("Conta, tipo, data e categoria são obrigatórios.");
         }
-        // IMPORTANTE: este construtor é só de receita e despesa. Transferência tem o seu (5c).
         if (tipo != TipoTransacao.RECEITA && tipo != TipoTransacao.DESPESA) {
             throw new RegraDeNegocioException("Tipo inválido para transação com categoria.");
         }
@@ -88,6 +87,26 @@ public class Transacao {
         this.valor = valor;
         this.data = data;
         this.categoria = categoria;
+    }
+
+    // Transferência: sem categoria, com transferenciaId. Só a Conta cria.
+    Transacao(Conta conta, TipoTransacao tipo, String descricao, Dinheiro valor,
+              LocalDate data, UUID transferenciaId) {
+        if (conta == null || tipo == null || data == null || transferenciaId == null) {
+            throw new RegraDeNegocioException("Conta, tipo, data e transferência são obrigatórios.");
+        }
+        if (tipo != TipoTransacao.TRANSFERENCIA_SAIDA && tipo != TipoTransacao.TRANSFERENCIA_ENTRADA) {
+            throw new RegraDeNegocioException("Tipo inválido para transferência.");
+        }
+        if (valor == null || valor.ehZero()) {
+            throw new RegraDeNegocioException("O valor da transação deve ser maior que zero.");
+        }
+        this.conta = conta;
+        this.tipo = tipo;
+        this.descricao = normalizarDescricao(descricao);
+        this.valor = valor;
+        this.data = data;
+        this.transferenciaId = transferenciaId;
     }
 
     private static String normalizarDescricao(String descricao) {
