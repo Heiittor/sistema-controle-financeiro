@@ -1,15 +1,14 @@
 package com.controlefinanceiro.api.application;
 
 import com.controlefinanceiro.api.domain.Categoria;
-import com.controlefinanceiro.api.domain.TipoTransacao;
+import com.controlefinanceiro.api.domain.TipoCategoria;
 import com.controlefinanceiro.api.domain.Usuario;
+import com.controlefinanceiro.api.domain.exception.ConflitoException;
+import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
 import com.controlefinanceiro.api.infrastructure.CategoriaRepository;
 import com.controlefinanceiro.api.infrastructure.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.controlefinanceiro.api.domain.exception.ConflitoException;
-import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
-
 
 import java.util.List;
 
@@ -26,7 +25,7 @@ public class CategoriaService {
     }
 
     @Transactional
-    public Categoria criar(Long usuarioId, String nome, TipoTransacao tipo) {
+    public Categoria criar(Long usuarioId, String nome, TipoCategoria tipo) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado."));
 
@@ -36,7 +35,6 @@ public class CategoriaService {
         // Checagem amigável. O UNIQUE do banco continua sendo a garantia final.
         if (categoriaRepository.existsByUsuarioIdAndTipoAndNomeIgnoreCase(
                 usuarioId, categoria.getTipo(), categoria.getNome())) {
-            // IMPORTANTE: ConflitoException é o que faz a API responder 409.
             throw new ConflitoException("Você já tem uma categoria com esse nome e tipo.");
         }
 
@@ -45,7 +43,7 @@ public class CategoriaService {
 
     // readOnly: avisa ao Spring que não vamos gravar nada, e ele pode otimizar.
     @Transactional(readOnly = true)
-    public List<Categoria> listar(Long usuarioId, TipoTransacao tipo) {
+    public List<Categoria> listar(Long usuarioId, TipoCategoria tipo) {
         // IMPORTANTE: sempre filtra pelo dono. Nunca existe "listar todas".
         if (tipo == null) {
             return categoriaRepository.findByUsuarioIdOrderByNomeAsc(usuarioId);

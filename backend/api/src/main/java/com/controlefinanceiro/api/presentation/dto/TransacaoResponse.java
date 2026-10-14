@@ -5,8 +5,9 @@ import com.controlefinanceiro.api.domain.Transacao;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
-// IMPORTANTE: só ids de conta e categoria. Ler o id de um proxy LAZY não vai ao banco (evita N+1).
+// categoriaId, categoriaNome e transferenciaId podem ser nulos (depende do tipo).
 public record TransacaoResponse(
         Long id,
         String descricao,
@@ -15,10 +16,13 @@ public record TransacaoResponse(
         TipoTransacao tipo,
         Long contaId,
         Long categoriaId,
-        String categoriaNome
+        String categoriaNome,
+        UUID transferenciaId
 ) {
 
     public static TransacaoResponse de(Transacao transacao) {
+        // IMPORTANTE: transferência não tem categoria, então não podemos assumir que ela existe.
+        var categoria = transacao.getCategoria();
         return new TransacaoResponse(
                 transacao.getId(),
                 transacao.getDescricao(),
@@ -26,7 +30,8 @@ public record TransacaoResponse(
                 transacao.getData(),
                 transacao.getTipo(),
                 transacao.getConta().getId(),
-                transacao.getCategoria().getId(),
-                transacao.getCategoria().getNome());
+                categoria != null ? categoria.getId() : null,
+                categoria != null ? categoria.getNome() : null,
+                transacao.getTransferenciaId());
     }
 }
