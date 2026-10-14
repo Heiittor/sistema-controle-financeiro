@@ -1,5 +1,6 @@
 package com.controlefinanceiro.api.domain;
 
+import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -13,11 +14,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Objects;
+import java.util.UUID;
 
 @Entity
 @Table(name = "transacoes")
@@ -39,16 +40,21 @@ public class Transacao {
     private LocalDate data;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 25)
     private TipoTransacao tipo;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "conta_id", nullable = false)
     private Conta conta;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "categoria_id", nullable = false)
+    // Opcional: transferências não têm categoria.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "categoria_id")
     private Categoria categoria;
+
+    // Liga as duas pontas de uma transferência. Nulo em receita e despesa.
+    @Column(name = "transferencia_id")
+    private UUID transferenciaId;
 
     @Column(name = "criado_em", insertable = false, updatable = false)
     private OffsetDateTime criadoEm;
@@ -63,10 +69,14 @@ public class Transacao {
         if (conta == null || tipo == null || data == null || categoria == null) {
             throw new RegraDeNegocioException("Conta, tipo, data e categoria são obrigatórios.");
         }
+        // IMPORTANTE: este construtor é só de receita e despesa. Transferência tem o seu (5c).
+        if (tipo != TipoTransacao.RECEITA && tipo != TipoTransacao.DESPESA) {
+            throw new RegraDeNegocioException("Tipo inválido para transação com categoria.");
+        }
         if (valor == null || valor.ehZero()) {
             throw new RegraDeNegocioException("O valor da transação deve ser maior que zero.");
         }
-        if (categoria.getTipo() != tipo) {
+        if (!categoria.getTipo().aceita(tipo)) {
             throw new RegraDeNegocioException("A categoria deve ser do mesmo tipo da transação.");
         }
         if (!Objects.equals(categoria.getUsuario().getId(), conta.getUsuario().getId())) {
@@ -98,5 +108,6 @@ public class Transacao {
     public TipoTransacao getTipo() { return tipo; }
     public Conta getConta() { return conta; }
     public Categoria getCategoria() { return categoria; }
+    public UUID getTransferenciaId() { return transferenciaId; }
     public OffsetDateTime getCriadoEm() { return criadoEm; }
 }
