@@ -9,7 +9,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
+import org.springframework.security.config.Customizer;
 @Configuration
 public class SegurancaConfig {
 
@@ -25,6 +25,7 @@ public class SegurancaConfig {
         http
                 // CSRF protege sessões com cookie. Nossa API é stateless com token no header.
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
                 // IMPORTANTE: sem sessão no servidor. Cada requisição prova quem é pelo token.
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a
