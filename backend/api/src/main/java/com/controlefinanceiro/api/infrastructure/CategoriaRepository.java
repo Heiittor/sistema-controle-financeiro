@@ -1,7 +1,7 @@
 package com.controlefinanceiro.api.infrastructure;
 
 import com.controlefinanceiro.api.domain.Categoria;
-import com.controlefinanceiro.api.domain.TipoTransacao;
+import com.controlefinanceiro.api.domain.TipoCategoria;
 import org.springframework.data.repository.Repository;
 
 import java.util.List;
@@ -19,9 +19,9 @@ public interface CategoriaRepository extends Repository<Categoria, Long> {
 
     List<Categoria> findByUsuarioIdOrderByNomeAsc(Long usuarioId);
 
-    List<Categoria> findByUsuarioIdAndTipoOrderByNomeAsc(Long usuarioId, TipoTransacao tipo);
+    List<Categoria> findByUsuarioIdAndTipoOrderByNomeAsc(Long usuarioId, TipoCategoria tipo);
 
     // IMPORTANTE: esta é a checagem amigável (ignora maiúsculas).
     // O UNIQUE do banco continua sendo a garantia final se duas requisições chegarem juntas.
-    boolean existsByUsuarioIdAndTipoAndNomeIgnoreCase(Long usuarioId, TipoTransacao tipo, String nome);
+    boolean existsByUsuarioIdAndTipoAndNomeIgnoreCase(Long usuarioId, TipoCategoria tipo, String nome);
 }

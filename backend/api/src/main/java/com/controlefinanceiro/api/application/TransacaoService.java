@@ -4,17 +4,17 @@ import com.controlefinanceiro.api.domain.Categoria;
 import com.controlefinanceiro.api.domain.Conta;
 import com.controlefinanceiro.api.domain.Dinheiro;
 import com.controlefinanceiro.api.domain.Transacao;
+import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
+import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 import com.controlefinanceiro.api.infrastructure.CategoriaRepository;
 import com.controlefinanceiro.api.infrastructure.ContaRepository;
 import com.controlefinanceiro.api.infrastructure.TransacaoRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
-import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
@@ -60,24 +60,6 @@ public class TransacaoService {
         return gravar(conta, transacao);
     }
 
-
-    // IMPORTANTE: busca sempre com o dono. Conta de outro usuário = 404, igual a "não existe".
-    private Conta buscarConta(Long usuarioId, Long contaId) {
-        return contaRepository.findByIdAndUsuarioId(contaId, usuarioId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Conta não encontrada."));
-    }
-
-    private Categoria buscarCategoria(Long usuarioId, Long categoriaId) {
-        return categoriaRepository.findByIdAndUsuarioId(categoriaId, usuarioId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria não encontrada."));
-    }
-
-    // Grava o saldo novo e a transação dentro da mesma transação do banco.
-    private Transacao gravar(Conta conta, Transacao transacao) {
-        contaRepository.save(conta);
-        return transacaoRepository.save(transacao);
-    }
-
     @Transactional(readOnly = true)
     public Page<Transacao> listar(Long usuarioId, Long contaId,
                                   LocalDate inicio, LocalDate fim, int pagina, int tamanho) {
@@ -100,5 +82,22 @@ public class TransacaoService {
 
         return transacaoRepository.findByContaIdAndContaUsuarioIdAndDataBetween(
                 contaId, usuarioId, de, ate, pageable);
+    }
+
+    // IMPORTANTE: busca sempre com o dono. Conta de outro usuário = 404, igual a "não existe".
+    private Conta buscarConta(Long usuarioId, Long contaId) {
+        return contaRepository.findByIdAndUsuarioId(contaId, usuarioId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Conta não encontrada."));
+    }
+
+    private Categoria buscarCategoria(Long usuarioId, Long categoriaId) {
+        return categoriaRepository.findByIdAndUsuarioId(categoriaId, usuarioId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria não encontrada."));
+    }
+
+    // Grava o saldo novo e a transação dentro da mesma transação do banco.
+    private Transacao gravar(Conta conta, Transacao transacao) {
+        contaRepository.save(conta);
+        return transacaoRepository.save(transacao);
     }
 }

@@ -16,6 +16,6 @@ class ContextoIntegracaoTest extends IntegracaoBase {
         Integer migracoes = jdbc.queryForObject(
                 "SELECT count(*) FROM flyway_schema_history WHERE success = true", Integer.class);
 
-        assertEquals(4, migracoes);
+        assertEquals(5, migracoes);
     }
 }

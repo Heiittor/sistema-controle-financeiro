@@ -9,4 +9,5 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     // O Spring traduz isso para: SELECT count(*) > 0 FROM usuarios WHERE email = ?
     boolean existsByEmail(String email);
+    java.util.Optional<Usuario> findByEmail(String email);
 }

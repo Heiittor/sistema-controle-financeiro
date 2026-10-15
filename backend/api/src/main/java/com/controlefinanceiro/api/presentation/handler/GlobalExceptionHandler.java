@@ -1,6 +1,7 @@
 package com.controlefinanceiro.api.presentation.handler;
 
 import com.controlefinanceiro.api.domain.exception.ConflitoException;
+import com.controlefinanceiro.api.domain.exception.CredenciaisInvalidasException;
 import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
 import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 import com.controlefinanceiro.api.presentation.dto.ErroResponse;
@@ -16,6 +17,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.dao.DataIntegrityViolationException;
+import com.controlefinanceiro.api.domain.exception.TentativasExcedidasException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.util.List;
 
@@ -99,6 +103,40 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(ErroResponse.de(
                 HttpStatus.BAD_REQUEST.value(),
                 "Valor inválido para o parâmetro '" + ex.getName() + "'."));
+    }
+    // 401: login com e-mail ou senha errados. Mesma mensagem para os dois casos, de propósito.
+    @ExceptionHandler(CredenciaisInvalidasException.class)
+    public ResponseEntity<ErroResponse> tratarCredenciaisInvalidas(CredenciaisInvalidasException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ErroResponse.de(HttpStatus.UNAUTHORIZED.value(), ex.getMessage()));
+    }
+    // Corrida no UNIQUE: duas requisições passaram na checagem amigável e o banco barrou a segunda.
+    // Mensagem genérica: o texto da exceção revela constraint e SQL.
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErroResponse> tratarIntegridade(DataIntegrityViolationException ex) {
+        log.warn("Violação de integridade no banco: {}", ex.getMostSpecificCause().getMessage());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ErroResponse.de(
+                HttpStatus.CONFLICT.value(), "Já existe um registro com esses dados."));
+    }
+    // 429: excesso de tentativas de login. Retry-After diz, em segundos, quando tentar de novo.
+    @ExceptionHandler(TentativasExcedidasException.class)
+    public ResponseEntity<ErroResponse> tratarTentativasExcedidas(TentativasExcedidasException ex) {
+        long segundos = ex.getSegundosParaLiberar();
+        long minutos = (segundos + 59) / 60; // arredonda para cima
+
+        String mensagem = "Muitas tentativas de login. Tente novamente em " + minutos + " minuto(s).";
+
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(segundos))
+                .body(ErroResponse.de(HttpStatus.TOO_MANY_REQUESTS.value(), mensagem));
+    }
+    // Duas operações alteraram a mesma conta ao mesmo tempo (@Version): a segunda perde e pode repetir.
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErroResponse> tratarConflitoDeVersao(ObjectOptimisticLockingFailureException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ErroResponse.de(
+                HttpStatus.CONFLICT.value(),
+                "A conta foi alterada por outra operação. Tente novamente."));
     }
 
 }

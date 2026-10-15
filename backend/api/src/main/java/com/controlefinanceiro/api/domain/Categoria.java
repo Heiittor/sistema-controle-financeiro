@@ -1,5 +1,6 @@
 package com.controlefinanceiro.api.domain;
 
+import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -11,7 +12,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 
 import java.time.OffsetDateTime;
 
@@ -28,7 +28,7 @@ public class Categoria {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
-    private TipoTransacao tipo;
+    private TipoCategoria tipo;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "usuario_id", nullable = false)
@@ -41,7 +41,7 @@ public class Categoria {
     protected Categoria() {
     }
 
-    public Categoria(String nome, TipoTransacao tipo, Usuario usuario) {
+    public Categoria(String nome, TipoCategoria tipo, Usuario usuario) {
         this.nome = normalizarNome(nome);
         this.tipo = exigir(tipo, "O tipo da categoria é obrigatório.");
         this.usuario = exigir(usuario, "O usuário da categoria é obrigatório.");
@@ -71,7 +71,7 @@ public class Categoria {
 
     public Long getId() { return id; }
     public String getNome() { return nome; }
-    public TipoTransacao getTipo() { return tipo; }
+    public TipoCategoria getTipo() { return tipo; }
     public Usuario getUsuario() { return usuario; }
     public OffsetDateTime getCriadoEm() { return criadoEm; }
 }

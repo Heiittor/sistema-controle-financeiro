@@ -1,5 +1,6 @@
 package com.controlefinanceiro.api.domain;
 
+import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -15,10 +16,8 @@ import jakarta.persistence.Version;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-
-import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
-
-import java.time.OffsetDateTime;
+import java.util.Objects;
+import java.util.UUID;
 
 @Entity
 @Table(name = "contas")
@@ -85,6 +84,41 @@ public class Conta {
         return transacao;
     }
 
+    // As duas pontas de uma transferência.
+    public record ParTransferencia(Transacao saida, Transacao entrada) {
+    }
+
+    public ParTransferencia transferirPara(Conta destino, String descricao, Dinheiro valor, LocalDate data) {
+        if (destino == null) {
+            throw new RegraDeNegocioException("A conta de destino é obrigatória.");
+        }
+        // IMPORTANTE: transferir para si mesma não faz sentido e geraria dois lançamentos inúteis.
+        boolean mesmaConta = (this.id != null && destino.id != null)
+                ? this.id.equals(destino.id)
+                : this == destino;
+        if (mesmaConta) {
+            throw new RegraDeNegocioException("A conta de origem e a de destino devem ser diferentes.");
+        }
+        // Segunda linha de defesa: o Service já busca as duas contas com o dono.
+        if (!Objects.equals(this.usuario.getId(), destino.usuario.getId())) {
+            throw new RegraDeNegocioException("Só é possível transferir entre contas do mesmo usuário.");
+        }
+
+        UUID transferenciaId = UUID.randomUUID();
+
+        // Cria as duas transações ANTES de mexer nos saldos: se algo for inválido, nada foi alterado.
+        Transacao saida = new Transacao(this, TipoTransacao.TRANSFERENCIA_SAIDA,
+                descricao, valor, data, transferenciaId);
+        Transacao entrada = new Transacao(destino, TipoTransacao.TRANSFERENCIA_ENTRADA,
+                descricao, valor, data, transferenciaId);
+
+        // Débito primeiro: se faltar saldo, lança "Saldo insuficiente." sem ter creditado nada.
+        this.debitar(valor);
+        destino.creditar(valor);
+
+        return new ParTransferencia(saida, entrada);
+    }
+
     public void renomear(String novoNome) {
         this.nome = normalizarNome(novoNome);
     }
@@ -106,23 +140,9 @@ public class Conta {
         return limpo;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public Dinheiro getSaldo() {
-        return saldo;
-    }
-
-    public Usuario getUsuario() {
-        return usuario;
-    }
-
-    public OffsetDateTime getCriadoEm() {
-        return criadoEm;
-    }
+    public Long getId() { return id; }
+    public String getNome() { return nome; }
+    public Dinheiro getSaldo() { return saldo; }
+    public Usuario getUsuario() { return usuario; }
+    public OffsetDateTime getCriadoEm() { return criadoEm; }
 }
