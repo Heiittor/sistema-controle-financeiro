@@ -41,10 +41,15 @@ class SegurancaTest extends IntegracaoBase {
     @Test
     void deveRecusarTokenAdulterado() throws Exception {
         Sessao ana = cadastrarELogar(mockMvc, "Ana");
-        String token = ana.token();
-        // Troca o último caractere da assinatura: a assinatura deixa de bater.
-        char ultimo = token.charAt(token.length() - 1);
-        String adulterado = token.substring(0, token.length() - 1) + (ultimo == 'A' ? 'B' : 'A');
+
+        // Token = cabecalho.payload.assinatura. Trocamos o PRIMEIRO caractere da assinatura:
+        // os 6 bits dele são significativos, então os bytes da assinatura mudam de verdade.
+        // (O último caractere tem bits de preenchimento ignorados pelo decodificador.)
+        String[] partes = ana.token().split("\\.");
+        String assinatura = partes[2];
+        char primeiro = assinatura.charAt(0);
+        String adulterada = (primeiro == 'A' ? 'B' : 'A') + assinatura.substring(1);
+        String adulterado = partes[0] + "." + partes[1] + "." + adulterada;
 
         mockMvc.perform(get("/contas").header("Authorization", "Bearer " + adulterado))
                 .andExpect(status().isUnauthorized());
