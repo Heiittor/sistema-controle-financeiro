@@ -77,8 +77,8 @@ public class GlobalExceptionHandler {
     // 422: dados bem formados, mas o negócio não permite (ex.: saldo insuficiente).
     @ExceptionHandler(RegraDeNegocioException.class)
     public ResponseEntity<ErroResponse> tratarRegraDeNegocio(RegraDeNegocioException ex) {
-        return ResponseEntity.unprocessableEntity()
-                .body(ErroResponse.de(HttpStatus.UNPROCESSABLE_ENTITY.value(), ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT)
+                .body(ErroResponse.de(HttpStatus.UNPROCESSABLE_CONTENT.value(), ex.getMessage()));
     }
 
     // Rota ou arquivo que não existe (ex.: GET /, /favicon.ico). É 404, não 500.
