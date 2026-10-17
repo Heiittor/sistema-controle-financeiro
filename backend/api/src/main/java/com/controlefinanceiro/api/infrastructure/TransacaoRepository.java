@@ -1,17 +1,17 @@
 package com.controlefinanceiro.api.infrastructure;
 
+import com.controlefinanceiro.api.domain.TipoTransacao;
 import com.controlefinanceiro.api.domain.Transacao;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.Repository;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
-import com.controlefinanceiro.api.domain.TipoTransacao;
-import java.math.BigDecimal;
-import java.util.List;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 // IMPORTANTE: sem findById nem findAll. Toda leitura passa pelo dono da conta.
@@ -20,17 +20,21 @@ public interface TransacaoRepository extends Repository<Transacao, Long> {
     // Só grava o que a Conta já criou e validou. Nunca crie Transacao por fora da Conta.
     Transacao save(Transacao transacao);
 
-    // IMPORTANTE: ContaUsuarioId = conta -> usuario -> id.
-    // A transação só aparece se a conta dela pertencer ao usuário que pediu.
+    // ContaUsuarioId = conta -> usuario -> id. A transação só aparece se a conta for do usuário.
     Optional<Transacao> findByIdAndContaUsuarioId(Long id, Long usuarioId);
 
-    // Histórico de UMA conta, num período, paginado.
-    // Exige conta e dono: se a conta for de outro usuário, a lista vem vazia.
+    // IMPORTANTE: além do dono, exige que a transação seja DESTA conta (a da URL).
+    Optional<Transacao> findByIdAndContaIdAndContaUsuarioId(Long id, Long contaId, Long usuarioId);
+
+    // Evita estorno duplicado: existe alguma transação que estorna esta?
+    boolean existsByEstornoDeId(Long estornoDeId);
+
     // IMPORTANTE: traz a categoria junto, num JOIN só. Evita 1 consulta extra por transação (N+1).
     @EntityGraph(attributePaths = "categoria")
     Page<Transacao> findByContaIdAndContaUsuarioIdAndDataBetween(
             Long contaId, Long usuarioId, LocalDate inicio, LocalDate fim, Pageable pageable);
-    // Totais por categoria no período. Só receita e despesa (transferência tem categoria nula e fica de fora).
+
+    // Totais por categoria no período. Só receita e despesa (transferência e estorno ficam de fora).
     // A soma é feita pelo banco: não carregamos as transações na memória.
     @Query("""
             select t.categoria.id as categoriaId, t.categoria.nome as categoriaNome,

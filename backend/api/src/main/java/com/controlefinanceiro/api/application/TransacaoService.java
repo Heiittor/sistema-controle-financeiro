@@ -4,6 +4,7 @@ import com.controlefinanceiro.api.domain.Categoria;
 import com.controlefinanceiro.api.domain.Conta;
 import com.controlefinanceiro.api.domain.Dinheiro;
 import com.controlefinanceiro.api.domain.Transacao;
+import com.controlefinanceiro.api.domain.exception.ConflitoException;
 import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
 import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 import com.controlefinanceiro.api.infrastructure.CategoriaRepository;
@@ -60,6 +61,36 @@ public class TransacaoService {
         return gravar(conta, transacao);
     }
 
+    // Desfaz uma receita ou despesa com um lançamento inverso. Nada é apagado.
+    @Transactional
+    public Transacao estornar(Long usuarioId, Long contaId, Long transacaoId) {
+        // IMPORTANTE: a conta vem primeiro. Na mesma sessão, a transação reaproveita essa instância.
+        Conta conta = buscarConta(usuarioId, contaId);
+        Transacao original = buscarTransacao(usuarioId, contaId, transacaoId);
+
+        if (transacaoRepository.existsByEstornoDeId(transacaoId)) {
+            throw new ConflitoException("Esta transação já foi estornada.");
+        }
+
+        // Regras (transferência, estorno, saldo) moram na Conta.
+        Transacao estorno = conta.estornar(original, LocalDate.now());
+
+        return gravar(conta, estorno);
+    }
+
+    // Edita só descrição e categoria. O saldo não muda.
+    @Transactional
+    public Transacao editar(Long usuarioId, Long contaId, Long transacaoId,
+                            Long categoriaId, String descricao) {
+        Conta conta = buscarConta(usuarioId, contaId);
+        Transacao transacao = buscarTransacao(usuarioId, contaId, transacaoId);
+        Categoria categoria = buscarCategoria(usuarioId, categoriaId);
+
+        conta.editarTransacao(transacao, descricao, categoria);
+
+        return transacaoRepository.save(transacao);
+    }
+
     @Transactional(readOnly = true)
     public Page<Transacao> listar(Long usuarioId, Long contaId,
                                   LocalDate inicio, LocalDate fim, int pagina, int tamanho) {
@@ -93,6 +124,12 @@ public class TransacaoService {
     private Categoria buscarCategoria(Long usuarioId, Long categoriaId) {
         return categoriaRepository.findByIdAndUsuarioId(categoriaId, usuarioId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria não encontrada."));
+    }
+
+    // IMPORTANTE: a transação precisa ser da conta da URL E do usuário. Senão, 404.
+    private Transacao buscarTransacao(Long usuarioId, Long contaId, Long transacaoId) {
+        return transacaoRepository.findByIdAndContaIdAndContaUsuarioId(transacaoId, contaId, usuarioId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Transação não encontrada."));
     }
 
     // Grava o saldo novo e a transação dentro da mesma transação do banco.
