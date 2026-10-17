@@ -68,7 +68,7 @@ public class TransacaoService {
         Conta conta = buscarConta(usuarioId, contaId);
         Transacao original = buscarTransacao(usuarioId, contaId, transacaoId);
 
-        if (transacaoRepository.existsByEstornoDeId(transacaoId)) {
+        if (transacaoRepository.existsByEstornoDe_Id(transacaoId)) {
             throw new ConflitoException("Esta transação já foi estornada.");
         }
 

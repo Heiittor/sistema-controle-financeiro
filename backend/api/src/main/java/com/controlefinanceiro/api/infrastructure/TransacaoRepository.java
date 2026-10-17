@@ -27,7 +27,7 @@ public interface TransacaoRepository extends Repository<Transacao, Long> {
     Optional<Transacao> findByIdAndContaIdAndContaUsuarioId(Long id, Long contaId, Long usuarioId);
 
     // Evita estorno duplicado: existe alguma transação que estorna esta?
-    boolean existsByEstornoDeId(Long estornoDeId);
+    boolean existsByEstornoDe_Id(Long estornoDeId);
 
     // IMPORTANTE: traz a categoria junto, num JOIN só. Evita 1 consulta extra por transação (N+1).
     @EntityGraph(attributePaths = "categoria")
@@ -35,6 +35,8 @@ public interface TransacaoRepository extends Repository<Transacao, Long> {
             Long contaId, Long usuarioId, LocalDate inicio, LocalDate fim, Pageable pageable);
 
     // Totais por categoria no período. Só receita e despesa (transferência e estorno ficam de fora).
+    // A soma é feita pelo banco: não carregamos as transações na memória.
+    // Totais por categoria no período. Só receita e despesa que NÃO foram estornadas.
     // A soma é feita pelo banco: não carregamos as transações na memória.
     @Query("""
             select t.categoria.id as categoriaId, t.categoria.nome as categoriaNome,
@@ -45,6 +47,7 @@ public interface TransacaoRepository extends Repository<Transacao, Long> {
               and t.data between :inicio and :fim
               and t.tipo in (com.controlefinanceiro.api.domain.TipoTransacao.RECEITA,
                              com.controlefinanceiro.api.domain.TipoTransacao.DESPESA)
+              and not exists (select 1 from Transacao e where e.estornoDe.id = t.id)
             group by t.categoria.id, t.categoria.nome, t.tipo
             order by t.categoria.nome
             """)

@@ -31,4 +31,13 @@ class CorsTest extends IntegracaoBase {
                         .header("Access-Control-Request-Method", "GET"))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void devePermitirPreflightDoPatch() throws Exception {
+        mockMvc.perform(options("/contas/1/transacoes/1")
+                        .header("Origin", "http://localhost:5173")
+                        .header("Access-Control-Request-Method", "PATCH")
+                        .header("Access-Control-Request-Headers", "Authorization,Content-Type"))
+                .andExpect(status().isOk());
+    }
 }
