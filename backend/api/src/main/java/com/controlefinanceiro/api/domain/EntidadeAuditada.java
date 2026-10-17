@@ -1,4 +1,8 @@
 package com.controlefinanceiro.api.domain;
 
-public class EntidadeAuditada {
+public enum EntidadeAuditada {
+    USUARIO,
+    CONTA,
+    CATEGORIA,
+    TRANSACAO
 }
