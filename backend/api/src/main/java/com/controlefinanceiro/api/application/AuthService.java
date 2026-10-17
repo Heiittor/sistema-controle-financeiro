@@ -3,6 +3,7 @@ package com.controlefinanceiro.api.application;
 import com.controlefinanceiro.api.application.TokenService.TokenEmitido;
 import com.controlefinanceiro.api.domain.Usuario;
 import com.controlefinanceiro.api.domain.exception.CredenciaisInvalidasException;
+import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 import com.controlefinanceiro.api.domain.exception.TentativasExcedidasException;
 import com.controlefinanceiro.api.infrastructure.UsuarioRepository;
 import com.controlefinanceiro.api.infrastructure.seguranca.LimitadorTentativasLogin;
@@ -16,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
-import java.util.Locale;
+
 
 @Service
 public class AuthService {
@@ -45,7 +46,16 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public TokenEmitido autenticar(String email, String senha, String ip) {
-        String emailNormalizado = email.trim().toLowerCase(Locale.ROOT);
+        String emailNormalizado;
+        try {
+            // Mesma regra do cadastro (Usuario.normalizarEmail): uma só fonte da verdade.
+            emailNormalizado = Usuario.normalizarEmail(email);
+        } catch (RegraDeNegocioException e) {
+            // E-mail malformado nunca existe no banco. Mesma resposta de "senha errada", sem criar oráculo.
+            log.warn("Falha de login: formato de e-mail inválido ip={}", ip);
+            passwordEncoder.matches(senha, hashFalso); // iguala o tempo de resposta
+            throw new CredenciaisInvalidasException(MENSAGEM);
+        }
         String chave = emailNormalizado + "|" + ip;
 
         // IMPORTANTE: checa o bloqueio ANTES do BCrypt, para o atacante não gastar nossa CPU.
