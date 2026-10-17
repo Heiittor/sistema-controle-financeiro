@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-// categoriaId, categoriaNome e transferenciaId podem ser nulos (depende do tipo).
+// categoriaId, categoriaNome, transferenciaId e estornoDeId podem ser nulos (depende do tipo).
 public record TransacaoResponse(
         Long id,
         String descricao,
@@ -17,11 +17,12 @@ public record TransacaoResponse(
         Long contaId,
         Long categoriaId,
         String categoriaNome,
-        UUID transferenciaId
+        UUID transferenciaId,
+        Long estornoDeId
 ) {
 
     public static TransacaoResponse de(Transacao transacao) {
-        // IMPORTANTE: transferência não tem categoria, então não podemos assumir que ela existe.
+        // IMPORTANTE: transferência e estorno não têm categoria, então não podemos assumir que ela existe.
         var categoria = transacao.getCategoria();
         return new TransacaoResponse(
                 transacao.getId(),
@@ -32,6 +33,7 @@ public record TransacaoResponse(
                 transacao.getConta().getId(),
                 categoria != null ? categoria.getId() : null,
                 categoria != null ? categoria.getNome() : null,
-                transacao.getTransferenciaId());
+                transacao.getTransferenciaId(),
+                transacao.getEstornoDeId());
     }
 }
