@@ -26,7 +26,7 @@ public class CorsConfig {
                 .toList();
         config.setAllowedOrigins(permitidas);
 
-        config.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 
         // Sem isto o navegador esconde o Retry-After do frontend (usado no 429 do login).

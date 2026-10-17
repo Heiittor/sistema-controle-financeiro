@@ -47,14 +47,19 @@ public class Transacao {
     @JoinColumn(name = "conta_id", nullable = false)
     private Conta conta;
 
-    // Opcional: transferências não têm categoria.
+    // Opcional: transferências e estornos não têm categoria.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categoria_id")
     private Categoria categoria;
 
-    // Liga as duas pontas de uma transferência. Nulo em receita e despesa.
+    // Liga as duas pontas de uma transferência. Nulo nos demais tipos.
     @Column(name = "transferencia_id")
     private UUID transferenciaId;
+
+    // Só no estorno: aponta para a transação original que ele desfaz.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "estorno_de_id")
+    private Transacao estornoDe;
 
     @Column(name = "criado_em", insertable = false, updatable = false)
     private OffsetDateTime criadoEm;
@@ -75,12 +80,7 @@ public class Transacao {
         if (valor == null || valor.ehZero()) {
             throw new RegraDeNegocioException("O valor da transação deve ser maior que zero.");
         }
-        if (!categoria.getTipo().aceita(tipo)) {
-            throw new RegraDeNegocioException("A categoria deve ser do mesmo tipo da transação.");
-        }
-        if (!Objects.equals(categoria.getUsuario().getId(), conta.getUsuario().getId())) {
-            throw new RegraDeNegocioException("A categoria não pertence ao dono da conta.");
-        }
+        validarCategoria(conta, tipo, categoria);
         this.conta = conta;
         this.tipo = tipo;
         this.descricao = normalizarDescricao(descricao);
@@ -109,6 +109,56 @@ public class Transacao {
         this.transferenciaId = transferenciaId;
     }
 
+    // Estorno: lançamento inverso da original. Tipo e valor vêm dela, o chamador não escolhe.
+    Transacao(Transacao original, LocalDate data) {
+        if (original == null || data == null) {
+            throw new RegraDeNegocioException("Transação original e data são obrigatórias.");
+        }
+        if (!original.ehEstornavel()) {
+            throw new RegraDeNegocioException("Só receitas e despesas podem ser estornadas.");
+        }
+        this.conta = original.conta;
+        this.tipo = original.tipo == TipoTransacao.RECEITA
+                ? TipoTransacao.ESTORNO_RECEITA
+                : TipoTransacao.ESTORNO_DESPESA;
+        this.descricao = normalizarDescricao(abreviar("Estorno: " + original.descricao));
+        this.valor = original.valor;
+        this.data = data;
+        this.estornoDe = original;
+    }
+
+    // Só receita e despesa podem ser estornadas (transferência e estorno não).
+    boolean ehEstornavel() {
+        return tipo == TipoTransacao.RECEITA || tipo == TipoTransacao.DESPESA;
+    }
+
+    // Edição: só descrição e categoria. Valor, data, tipo e conta são fatos financeiros (para corrigir, estorna).
+    void editar(String novaDescricao, Categoria novaCategoria) {
+        if (!ehEstornavel()) {
+            throw new RegraDeNegocioException("Só receitas e despesas podem ser editadas.");
+        }
+        if (novaCategoria == null) {
+            throw new RegraDeNegocioException("A categoria é obrigatória.");
+        }
+        validarCategoria(this.conta, this.tipo, novaCategoria);
+        this.descricao = normalizarDescricao(novaDescricao);
+        this.categoria = novaCategoria;
+    }
+
+    private static void validarCategoria(Conta conta, TipoTransacao tipo, Categoria categoria) {
+        if (!categoria.getTipo().aceita(tipo)) {
+            throw new RegraDeNegocioException("A categoria deve ser do mesmo tipo da transação.");
+        }
+        if (!Objects.equals(categoria.getUsuario().getId(), conta.getUsuario().getId())) {
+            throw new RegraDeNegocioException("A categoria não pertence ao dono da conta.");
+        }
+    }
+
+    // Descrições longas não podem estourar o limite de 255 ao receber o prefixo "Estorno: ".
+    private static String abreviar(String texto) {
+        return texto.length() > 255 ? texto.substring(0, 255) : texto;
+    }
+
     private static String normalizarDescricao(String descricao) {
         if (descricao == null || descricao.isBlank()) {
             throw new RegraDeNegocioException("A descrição da transação é obrigatória.");
@@ -129,4 +179,7 @@ public class Transacao {
     public Categoria getCategoria() { return categoria; }
     public UUID getTransferenciaId() { return transferenciaId; }
     public OffsetDateTime getCriadoEm() { return criadoEm; }
+
+    // Só o id da original: ler o id de um proxy LAZY não consulta o banco.
+    public Long getEstornoDeId() { return estornoDe != null ? estornoDe.getId() : null; }
 }

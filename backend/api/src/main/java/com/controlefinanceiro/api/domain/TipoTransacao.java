@@ -5,7 +5,10 @@ public enum TipoTransacao {
     DESPESA,
     // Os dois lados de uma transferência entre contas (ligados por transferenciaId).
     TRANSFERENCIA_SAIDA,
-    TRANSFERENCIA_ENTRADA
+    TRANSFERENCIA_ENTRADA,
+    // Lançamentos inversos que desfazem uma receita ou uma despesa (ligados por estornoDe).
+    ESTORNO_RECEITA,
+    ESTORNO_DESPESA
 }
 
 //esse tipo foi preferivel porque Enum diferentemente de string(onde alguem pode digitar algo errado) nos usamos o Enum que basicamnete ja tem uma lista fixa de opções permitidas

@@ -1,5 +1,7 @@
 package com.controlefinanceiro.api.application;
 
+import com.controlefinanceiro.api.domain.AcaoAuditoria;
+import com.controlefinanceiro.api.domain.EntidadeAuditada;
 import com.controlefinanceiro.api.domain.Usuario;
 import com.controlefinanceiro.api.domain.exception.ConflitoException;
 import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
@@ -13,10 +15,14 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditoriaService auditoriaService;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+    public UsuarioService(UsuarioRepository usuarioRepository,
+                          PasswordEncoder passwordEncoder,
+                          AuditoriaService auditoriaService) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional
@@ -33,6 +39,11 @@ public class UsuarioService {
             throw new ConflitoException("Este e-mail já está em uso.");
         }
 
-        return usuarioRepository.save(usuario);
+        Usuario salvo = usuarioRepository.save(usuario);
+
+        // Sem detalhes: nada de e-mail ou dado pessoal na auditoria.
+        auditoriaService.registrar(salvo.getId(), AcaoAuditoria.CADASTRAR_USUARIO,
+                EntidadeAuditada.USUARIO, salvo.getId(), null);
+        return salvo;
     }
 }

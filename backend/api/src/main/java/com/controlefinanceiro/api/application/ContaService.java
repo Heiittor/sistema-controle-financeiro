@@ -1,13 +1,15 @@
 package com.controlefinanceiro.api.application;
 
+import com.controlefinanceiro.api.domain.AcaoAuditoria;
 import com.controlefinanceiro.api.domain.Conta;
+import com.controlefinanceiro.api.domain.EntidadeAuditada;
 import com.controlefinanceiro.api.domain.Usuario;
+import com.controlefinanceiro.api.domain.exception.ConflitoException;
+import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
 import com.controlefinanceiro.api.infrastructure.ContaRepository;
 import com.controlefinanceiro.api.infrastructure.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.controlefinanceiro.api.domain.exception.ConflitoException;
-import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
 
 import java.util.List;
 
@@ -16,11 +18,14 @@ public class ContaService {
 
     private final ContaRepository contaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final AuditoriaService auditoriaService;
 
     public ContaService(ContaRepository contaRepository,
-                        UsuarioRepository usuarioRepository) {
+                        UsuarioRepository usuarioRepository,
+                        AuditoriaService auditoriaService) {
         this.contaRepository = contaRepository;
         this.usuarioRepository = usuarioRepository;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional
@@ -33,11 +38,14 @@ public class ContaService {
 
         // Checagem amigável. O UNIQUE do banco continua sendo a garantia final.
         if (contaRepository.existsByUsuarioIdAndNomeIgnoreCase(usuarioId, conta.getNome())) {
-            // IMPORTANTE: ConflitoException é o que faz a API responder 409.
             throw new ConflitoException("Você já tem uma conta com esse nome.");
         }
 
-        return contaRepository.save(conta);
+        Conta salva = contaRepository.save(conta);
+
+        auditoriaService.registrar(usuarioId, AcaoAuditoria.CRIAR_CONTA,
+                EntidadeAuditada.CONTA, salva.getId(), "nome=" + salva.getNome());
+        return salva;
     }
 
     @Transactional(readOnly = true)

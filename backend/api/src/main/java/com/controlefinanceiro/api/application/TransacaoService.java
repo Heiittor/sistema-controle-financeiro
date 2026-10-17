@@ -1,9 +1,12 @@
 package com.controlefinanceiro.api.application;
 
+import com.controlefinanceiro.api.domain.AcaoAuditoria;
 import com.controlefinanceiro.api.domain.Categoria;
 import com.controlefinanceiro.api.domain.Conta;
 import com.controlefinanceiro.api.domain.Dinheiro;
+import com.controlefinanceiro.api.domain.EntidadeAuditada;
 import com.controlefinanceiro.api.domain.Transacao;
+import com.controlefinanceiro.api.domain.exception.ConflitoException;
 import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
 import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 import com.controlefinanceiro.api.infrastructure.CategoriaRepository;
@@ -27,16 +30,19 @@ public class TransacaoService {
     private final ContaRepository contaRepository;
     private final CategoriaRepository categoriaRepository;
     private final TransacaoRepository transacaoRepository;
+    private final AuditoriaService auditoriaService;
 
     public TransacaoService(ContaRepository contaRepository,
                             CategoriaRepository categoriaRepository,
-                            TransacaoRepository transacaoRepository) {
+                            TransacaoRepository transacaoRepository,
+                            AuditoriaService auditoriaService) {
         this.contaRepository = contaRepository;
         this.categoriaRepository = categoriaRepository;
         this.transacaoRepository = transacaoRepository;
+        this.auditoriaService = auditoriaService;
     }
 
-    // IMPORTANTE: @Transactional faz as duas gravações valerem juntas ou nenhuma.
+    // IMPORTANTE: @Transactional faz saldo, transação e auditoria valerem juntos ou nenhum.
     @Transactional
     public Transacao registrarReceita(Long usuarioId, Long contaId, Long categoriaId,
                                       String descricao, Dinheiro valor, LocalDate data) {
@@ -46,7 +52,9 @@ public class TransacaoService {
         // As regras moram na Conta. O Service não decide nada sobre saldo.
         Transacao transacao = conta.registrarReceita(descricao, valor, data, categoria);
 
-        return gravar(conta, transacao);
+        Transacao salva = gravar(conta, transacao);
+        auditarMovimento(usuarioId, AcaoAuditoria.REGISTRAR_RECEITA, salva);
+        return salva;
     }
 
     @Transactional
@@ -57,7 +65,50 @@ public class TransacaoService {
 
         Transacao transacao = conta.registrarDespesa(descricao, valor, data, categoria);
 
-        return gravar(conta, transacao);
+        Transacao salva = gravar(conta, transacao);
+        auditarMovimento(usuarioId, AcaoAuditoria.REGISTRAR_DESPESA, salva);
+        return salva;
+    }
+
+    // Desfaz uma receita ou despesa com um lançamento inverso. Nada é apagado.
+    @Transactional
+    public Transacao estornar(Long usuarioId, Long contaId, Long transacaoId) {
+        // IMPORTANTE: a conta vem primeiro. Na mesma sessão, a transação reaproveita essa instância.
+        Conta conta = buscarConta(usuarioId, contaId);
+        Transacao original = buscarTransacao(usuarioId, contaId, transacaoId);
+
+        if (transacaoRepository.existsByEstornoDe_Id(transacaoId)) {
+            throw new ConflitoException("Esta transação já foi estornada.");
+        }
+
+        // Regras (transferência, estorno, saldo) moram na Conta.
+        Transacao estorno = conta.estornar(original, LocalDate.now());
+
+        Transacao salvo = gravar(conta, estorno);
+
+        // O registro fica na transação ORIGINAL, com o id do estorno nos detalhes.
+        auditoriaService.registrar(usuarioId, AcaoAuditoria.ESTORNAR, EntidadeAuditada.TRANSACAO,
+                transacaoId, "conta=" + contaId + "; estornoId=" + salvo.getId()
+                        + "; valor=" + salvo.getValor().valor().toPlainString());
+        return salvo;
+    }
+
+    // Edita só descrição e categoria. O saldo não muda.
+    @Transactional
+    public Transacao editar(Long usuarioId, Long contaId, Long transacaoId,
+                            Long categoriaId, String descricao) {
+        Conta conta = buscarConta(usuarioId, contaId);
+        Transacao transacao = buscarTransacao(usuarioId, contaId, transacaoId);
+        Categoria categoria = buscarCategoria(usuarioId, categoriaId);
+
+        conta.editarTransacao(transacao, descricao, categoria);
+
+        Transacao salva = transacaoRepository.save(transacao);
+
+        // Só ids: a descrição digitada pelo usuário não vai para a auditoria.
+        auditoriaService.registrar(usuarioId, AcaoAuditoria.EDITAR_TRANSACAO, EntidadeAuditada.TRANSACAO,
+                transacaoId, "conta=" + contaId + "; categoriaId=" + categoriaId);
+        return salva;
     }
 
     @Transactional(readOnly = true)
@@ -95,9 +146,23 @@ public class TransacaoService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria não encontrada."));
     }
 
+    // IMPORTANTE: a transação precisa ser da conta da URL E do usuário. Senão, 404.
+    private Transacao buscarTransacao(Long usuarioId, Long contaId, Long transacaoId) {
+        return transacaoRepository.findByIdAndContaIdAndContaUsuarioId(transacaoId, contaId, usuarioId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Transação não encontrada."));
+    }
+
     // Grava o saldo novo e a transação dentro da mesma transação do banco.
     private Transacao gravar(Conta conta, Transacao transacao) {
         contaRepository.save(conta);
         return transacaoRepository.save(transacao);
+    }
+
+    // Receita e despesa: conta, categoria e valor (sem a descrição digitada).
+    private void auditarMovimento(Long usuarioId, AcaoAuditoria acao, Transacao salva) {
+        auditoriaService.registrar(usuarioId, acao, EntidadeAuditada.TRANSACAO, salva.getId(),
+                "conta=" + salva.getConta().getId()
+                        + "; categoriaId=" + salva.getCategoria().getId()
+                        + "; valor=" + salva.getValor().valor().toPlainString());
     }
 }

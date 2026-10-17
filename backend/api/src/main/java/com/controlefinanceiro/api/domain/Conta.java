@@ -93,10 +93,7 @@ public class Conta {
             throw new RegraDeNegocioException("A conta de destino é obrigatória.");
         }
         // IMPORTANTE: transferir para si mesma não faz sentido e geraria dois lançamentos inúteis.
-        boolean mesmaConta = (this.id != null && destino.id != null)
-                ? this.id.equals(destino.id)
-                : this == destino;
-        if (mesmaConta) {
+        if (this.mesmaContaQue(destino)) {
             throw new RegraDeNegocioException("A conta de origem e a de destino devem ser diferentes.");
         }
         // Segunda linha de defesa: o Service já busca as duas contas com o dono.
@@ -119,8 +116,49 @@ public class Conta {
         return new ParTransferencia(saida, entrada);
     }
 
+    // Desfaz uma receita ou despesa com um lançamento inverso. Nada é apagado: o histórico é imutável.
+    public Transacao estornar(Transacao original, LocalDate data) {
+        exigirTransacaoDestaConta(original);
+
+        // Cria primeiro: a Transacao recusa transferência e estorno, antes de qualquer mudança no saldo.
+        Transacao estorno = new Transacao(original, data);
+
+        // Estornar receita tira dinheiro (pode faltar saldo); estornar despesa devolve.
+        if (original.getTipo() == TipoTransacao.RECEITA) {
+            debitar(original.getValor());
+        } else {
+            creditar(original.getValor());
+        }
+        return estorno;
+    }
+
+    // Edita só descrição e categoria. Não mexe no saldo: valor e data são fatos financeiros.
+    public void editarTransacao(Transacao transacao, String novaDescricao, Categoria novaCategoria) {
+        exigirTransacaoDestaConta(transacao);
+        transacao.editar(novaDescricao, novaCategoria);
+    }
+
     public void renomear(String novoNome) {
         this.nome = normalizarNome(novoNome);
+    }
+
+    private void exigirTransacaoDestaConta(Transacao transacao) {
+        if (transacao == null) {
+            throw new RegraDeNegocioException("A transação é obrigatória.");
+        }
+        if (!this.mesmaContaQue(transacao.getConta())) {
+            throw new RegraDeNegocioException("A transação não pertence a esta conta.");
+        }
+    }
+
+    // Compara por id quando ambos existem; sem id (só em testes), pela referência do objeto.
+    private boolean mesmaContaQue(Conta outra) {
+        if (outra == null) {
+            return false;
+        }
+        return (this.id != null && outra.id != null)
+                ? this.id.equals(outra.id)
+                : this == outra;
     }
 
     private static void exigirValorPositivo(Dinheiro valor) {

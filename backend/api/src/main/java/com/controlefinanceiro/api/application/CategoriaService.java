@@ -1,6 +1,8 @@
 package com.controlefinanceiro.api.application;
 
+import com.controlefinanceiro.api.domain.AcaoAuditoria;
 import com.controlefinanceiro.api.domain.Categoria;
+import com.controlefinanceiro.api.domain.EntidadeAuditada;
 import com.controlefinanceiro.api.domain.TipoCategoria;
 import com.controlefinanceiro.api.domain.Usuario;
 import com.controlefinanceiro.api.domain.exception.ConflitoException;
@@ -17,11 +19,14 @@ public class CategoriaService {
 
     private final CategoriaRepository categoriaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final AuditoriaService auditoriaService;
 
     public CategoriaService(CategoriaRepository categoriaRepository,
-                            UsuarioRepository usuarioRepository) {
+                            UsuarioRepository usuarioRepository,
+                            AuditoriaService auditoriaService) {
         this.categoriaRepository = categoriaRepository;
         this.usuarioRepository = usuarioRepository;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional
@@ -38,7 +43,12 @@ public class CategoriaService {
             throw new ConflitoException("Você já tem uma categoria com esse nome e tipo.");
         }
 
-        return categoriaRepository.save(categoria);
+        Categoria salva = categoriaRepository.save(categoria);
+
+        auditoriaService.registrar(usuarioId, AcaoAuditoria.CRIAR_CATEGORIA,
+                EntidadeAuditada.CATEGORIA, salva.getId(),
+                "nome=" + salva.getNome() + "; tipo=" + salva.getTipo());
+        return salva;
     }
 
     // readOnly: avisa ao Spring que não vamos gravar nada, e ele pode otimizar.

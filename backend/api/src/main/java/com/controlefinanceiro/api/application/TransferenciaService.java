@@ -1,8 +1,10 @@
 package com.controlefinanceiro.api.application;
 
+import com.controlefinanceiro.api.domain.AcaoAuditoria;
 import com.controlefinanceiro.api.domain.Conta;
 import com.controlefinanceiro.api.domain.Conta.ParTransferencia;
 import com.controlefinanceiro.api.domain.Dinheiro;
+import com.controlefinanceiro.api.domain.EntidadeAuditada;
 import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
 import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
 import com.controlefinanceiro.api.infrastructure.ContaRepository;
@@ -18,11 +20,14 @@ public class TransferenciaService {
 
     private final ContaRepository contaRepository;
     private final TransacaoRepository transacaoRepository;
+    private final AuditoriaService auditoriaService;
 
     public TransferenciaService(ContaRepository contaRepository,
-                                TransacaoRepository transacaoRepository) {
+                                TransacaoRepository transacaoRepository,
+                                AuditoriaService auditoriaService) {
         this.contaRepository = contaRepository;
         this.transacaoRepository = transacaoRepository;
+        this.auditoriaService = auditoriaService;
     }
 
     // IMPORTANTE: tudo ou nada. Falhou em qualquer ponto, nada é gravado.
@@ -51,6 +56,13 @@ public class TransferenciaService {
         contaRepository.save(destino);
         transacaoRepository.save(par.saida());
         transacaoRepository.save(par.entrada());
+
+        // Um registro por transferência (no id da saída), com as duas contas e o id que liga o par.
+        auditoriaService.registrar(usuarioId, AcaoAuditoria.TRANSFERIR, EntidadeAuditada.TRANSACAO,
+                par.saida().getId(),
+                "origem=" + contaOrigemId + "; destino=" + contaDestinoId
+                        + "; valor=" + valor.valor().toPlainString()
+                        + "; transferenciaId=" + par.saida().getTransferenciaId());
         return par;
     }
 
