@@ -1,15 +1,14 @@
 package com.controlefinanceiro.api.application;
 
 import com.controlefinanceiro.api.domain.TipoTransacao;
-import com.controlefinanceiro.api.domain.exception.RecursoNaoEncontradoException;
 import com.controlefinanceiro.api.domain.exception.RegraDeNegocioException;
-import com.controlefinanceiro.api.infrastructure.ContaRepository;
 import com.controlefinanceiro.api.infrastructure.TransacaoRepository;
 import com.controlefinanceiro.api.infrastructure.TransacaoRepository.TotalPorCategoria;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -18,10 +17,13 @@ public class ResumoService {
 
     private final ContaDoUsuario contaDoUsuario;
     private final TransacaoRepository transacaoRepository;
+    private final Clock relogio;
 
-    public ResumoService(ContaDoUsuario contaDoUsuario, TransacaoRepository transacaoRepository) {
+    public ResumoService(ContaDoUsuario contaDoUsuario, TransacaoRepository transacaoRepository,
+                         Clock relogio) {
         this.contaDoUsuario = contaDoUsuario;
         this.transacaoRepository = transacaoRepository;
+        this.relogio = relogio;
     }
 
     public record Resumo(LocalDate inicio, LocalDate fim,
@@ -38,7 +40,8 @@ public class ResumoService {
         // IMPORTANTE: confirma que a conta é do usuário. Se não for, 404.
         contaDoUsuario.buscar(usuarioId, contaId);
 
-        LocalDate hoje = LocalDate.now();
+        // "Hoje" no fuso de negócio, e não no do servidor.
+        LocalDate hoje = LocalDate.now(relogio);
         LocalDate de = inicio != null ? inicio : hoje.withDayOfMonth(1);
         LocalDate ate = fim != null ? fim : hoje.withDayOfMonth(hoje.lengthOfMonth());
         if (de.isAfter(ate)) {

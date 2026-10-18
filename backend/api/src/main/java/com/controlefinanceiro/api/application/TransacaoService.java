@@ -19,6 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 
 @Service
@@ -31,138 +32,266 @@ public class TransacaoService {
     private final CategoriaRepository categoriaRepository;
     private final TransacaoRepository transacaoRepository;
     private final AuditoriaService auditoriaService;
+    private final Clock relogio;
 
-    public TransacaoService(ContaRepository contaRepository,
-                            CategoriaRepository categoriaRepository,
-                            TransacaoRepository transacaoRepository,
-                            AuditoriaService auditoriaService) {
+    public TransacaoService(
+            ContaRepository contaRepository,
+            CategoriaRepository categoriaRepository,
+            TransacaoRepository transacaoRepository,
+            AuditoriaService auditoriaService,
+            Clock relogio) {
+
         this.contaRepository = contaRepository;
         this.categoriaRepository = categoriaRepository;
         this.transacaoRepository = transacaoRepository;
         this.auditoriaService = auditoriaService;
+        this.relogio = relogio;
     }
 
-    // IMPORTANTE: @Transactional faz saldo, transação e auditoria valerem juntos ou nenhum.
+    // IMPORTANTE: saldo, transação e auditoria são persistidos na mesma transação.
     @Transactional
-    public Transacao registrarReceita(Long usuarioId, Long contaId, Long categoriaId,
-                                      String descricao, Dinheiro valor, LocalDate data) {
+    public Transacao registrarReceita(
+            Long usuarioId,
+            Long contaId,
+            Long categoriaId,
+            String descricao,
+            Dinheiro valor,
+            LocalDate data) {
+
         Conta conta = buscarConta(usuarioId, contaId);
         Categoria categoria = buscarCategoria(usuarioId, categoriaId);
 
-        // As regras moram na Conta. O Service não decide nada sobre saldo.
-        Transacao transacao = conta.registrarReceita(descricao, valor, data, categoria);
+        // As regras de negócio permanecem na entidade Conta.
+        Transacao transacao =
+                conta.registrarReceita(descricao, valor, data, categoria);
 
         Transacao salva = gravar(conta, transacao);
-        auditarMovimento(usuarioId, AcaoAuditoria.REGISTRAR_RECEITA, salva);
+
+        auditarMovimento(
+                usuarioId,
+                AcaoAuditoria.REGISTRAR_RECEITA,
+                salva
+        );
+
         return salva;
     }
 
     @Transactional
-    public Transacao registrarDespesa(Long usuarioId, Long contaId, Long categoriaId,
-                                      String descricao, Dinheiro valor, LocalDate data) {
+    public Transacao registrarDespesa(
+            Long usuarioId,
+            Long contaId,
+            Long categoriaId,
+            String descricao,
+            Dinheiro valor,
+            LocalDate data) {
+
         Conta conta = buscarConta(usuarioId, contaId);
         Categoria categoria = buscarCategoria(usuarioId, categoriaId);
 
-        Transacao transacao = conta.registrarDespesa(descricao, valor, data, categoria);
+        Transacao transacao =
+                conta.registrarDespesa(descricao, valor, data, categoria);
 
         Transacao salva = gravar(conta, transacao);
-        auditarMovimento(usuarioId, AcaoAuditoria.REGISTRAR_DESPESA, salva);
+
+        auditarMovimento(
+                usuarioId,
+                AcaoAuditoria.REGISTRAR_DESPESA,
+                salva
+        );
+
         return salva;
     }
 
-    // Desfaz uma receita ou despesa com um lançamento inverso. Nada é apagado.
+    // Estorna uma receita ou despesa por meio de um lançamento inverso.
+    // A transação original nunca é apagada.
     @Transactional
-    public Transacao estornar(Long usuarioId, Long contaId, Long transacaoId) {
-        // IMPORTANTE: a conta vem primeiro. Na mesma sessão, a transação reaproveita essa instância.
+    public Transacao estornar(
+            Long usuarioId,
+            Long contaId,
+            Long transacaoId) {
+
+        // Busca primeiro a conta do usuário autenticado.
         Conta conta = buscarConta(usuarioId, contaId);
-        Transacao original = buscarTransacao(usuarioId, contaId, transacaoId);
+        Transacao original =
+                buscarTransacao(usuarioId, contaId, transacaoId);
 
         if (transacaoRepository.existsByEstornoDe_Id(transacaoId)) {
-            throw new ConflitoException("Esta transação já foi estornada.");
+            throw new ConflitoException(
+                    "Esta transação já foi estornada."
+            );
         }
 
-        // Regras (transferência, estorno, saldo) moram na Conta.
-        Transacao estorno = conta.estornar(original, LocalDate.now());
+        // O Clock permite controlar a data atual e facilita os testes.
+        Transacao estorno =
+                conta.estornar(original, LocalDate.now(relogio));
 
-        Transacao salvo = gravar(conta, estorno);
+        Transacao salva = gravar(conta, estorno);
 
-        // O registro fica na transação ORIGINAL, com o id do estorno nos detalhes.
-        auditoriaService.registrar(usuarioId, AcaoAuditoria.ESTORNAR, EntidadeAuditada.TRANSACAO,
-                transacaoId, "conta=" + contaId + "; estornoId=" + salvo.getId()
-                        + "; valor=" + salvo.getValor().valor().toPlainString());
-        return salvo;
+        // Registra a auditoria associada à transação original.
+        auditoriaService.registrar(
+                usuarioId,
+                AcaoAuditoria.ESTORNAR,
+                EntidadeAuditada.TRANSACAO,
+                transacaoId,
+                "conta=" + contaId
+                        + "; estornoId=" + salva.getId()
+                        + "; valor="
+                        + salva.getValor().valor().toPlainString()
+        );
+
+        return salva;
     }
 
-    // Edita só descrição e categoria. O saldo não muda.
+    // Edita somente descrição e categoria. O saldo não muda.
     @Transactional
-    public Transacao editar(Long usuarioId, Long contaId, Long transacaoId,
-                            Long categoriaId, String descricao) {
+    public Transacao editar(
+            Long usuarioId,
+            Long contaId,
+            Long transacaoId,
+            Long categoriaId,
+            String descricao) {
+
         Conta conta = buscarConta(usuarioId, contaId);
-        Transacao transacao = buscarTransacao(usuarioId, contaId, transacaoId);
+
+        Transacao transacao =
+                buscarTransacao(usuarioId, contaId, transacaoId);
+
         Categoria categoria = buscarCategoria(usuarioId, categoriaId);
 
         conta.editarTransacao(transacao, descricao, categoria);
 
         Transacao salva = transacaoRepository.save(transacao);
 
-        // Só ids: a descrição digitada pelo usuário não vai para a auditoria.
-        auditoriaService.registrar(usuarioId, AcaoAuditoria.EDITAR_TRANSACAO, EntidadeAuditada.TRANSACAO,
-                transacaoId, "conta=" + contaId + "; categoriaId=" + categoriaId);
+        // Não registra a descrição digitada pelo usuário na auditoria.
+        auditoriaService.registrar(
+                usuarioId,
+                AcaoAuditoria.EDITAR_TRANSACAO,
+                EntidadeAuditada.TRANSACAO,
+                transacaoId,
+                "conta=" + contaId + "; categoriaId=" + categoriaId
+        );
+
         return salva;
     }
 
     @Transactional(readOnly = true)
-    public Page<Transacao> listar(Long usuarioId, Long contaId,
-                                  LocalDate inicio, LocalDate fim, int pagina, int tamanho) {
-        // IMPORTANTE: confirma que a conta é do usuário. Se não for, 404 (e não lista vazia).
+    public Page<Transacao> listar(
+            Long usuarioId,
+            Long contaId,
+            LocalDate inicio,
+            LocalDate fim,
+            int pagina,
+            int tamanho) {
+
+        // Confirma a propriedade da conta antes de consultar o histórico.
         buscarConta(usuarioId, contaId);
 
-        LocalDate hoje = LocalDate.now();
-        LocalDate de = inicio != null ? inicio : hoje.withDayOfMonth(1);
-        LocalDate ate = fim != null ? fim : hoje.withDayOfMonth(hoje.lengthOfMonth());
+        LocalDate hoje = LocalDate.now(relogio);
+
+        LocalDate de = inicio != null
+                ? inicio
+                : hoje.withDayOfMonth(1);
+
+        LocalDate ate = fim != null
+                ? fim
+                : hoje.withDayOfMonth(hoje.lengthOfMonth());
+
         if (de.isAfter(ate)) {
-            throw new RegraDeNegocioException("A data inicial não pode ser posterior à data final.");
+            throw new RegraDeNegocioException(
+                    "A data inicial não pode ser posterior à data final."
+            );
         }
 
-        // IMPORTANTE: limita o tamanho da página para ninguém pedir milhões de linhas de uma vez.
-        int tamanhoSeguro = tamanho <= 0 ? TAMANHO_PADRAO_PAGINA : Math.min(tamanho, TAMANHO_MAXIMO_PAGINA);
+        int tamanhoSeguro = tamanho <= 0
+                ? TAMANHO_PADRAO_PAGINA
+                : Math.min(tamanho, TAMANHO_MAXIMO_PAGINA);
+
         int paginaSegura = Math.max(pagina, 0);
 
-        Pageable pageable = PageRequest.of(paginaSegura, tamanhoSeguro,
-                Sort.by(Sort.Order.desc("data"), Sort.Order.desc("id")));
+        Pageable pageable = PageRequest.of(
+                paginaSegura,
+                tamanhoSeguro,
+                Sort.by(
+                        Sort.Order.desc("data"),
+                        Sort.Order.desc("id")
+                )
+        );
 
-        return transacaoRepository.findByContaIdAndContaUsuarioIdAndDataBetween(
-                contaId, usuarioId, de, ate, pageable);
+        return transacaoRepository
+                .findByContaIdAndContaUsuarioIdAndDataBetween(
+                        contaId,
+                        usuarioId,
+                        de,
+                        ate,
+                        pageable
+                );
     }
 
-    // IMPORTANTE: busca sempre com o dono. Conta de outro usuário = 404, igual a "não existe".
+    // Busca a conta sempre considerando seu proprietário.
     private Conta buscarConta(Long usuarioId, Long contaId) {
-        return contaRepository.findByIdAndUsuarioId(contaId, usuarioId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Conta não encontrada."));
+        return contaRepository
+                .findByIdAndUsuarioId(contaId, usuarioId)
+                .orElseThrow(
+                        () -> new RecursoNaoEncontradoException(
+                                "Conta não encontrada."
+                        )
+                );
     }
 
-    private Categoria buscarCategoria(Long usuarioId, Long categoriaId) {
-        return categoriaRepository.findByIdAndUsuarioId(categoriaId, usuarioId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria não encontrada."));
+    private Categoria buscarCategoria(
+            Long usuarioId,
+            Long categoriaId) {
+
+        return categoriaRepository
+                .findByIdAndUsuarioId(categoriaId, usuarioId)
+                .orElseThrow(
+                        () -> new RecursoNaoEncontradoException(
+                                "Categoria não encontrada."
+                        )
+                );
     }
 
-    // IMPORTANTE: a transação precisa ser da conta da URL E do usuário. Senão, 404.
-    private Transacao buscarTransacao(Long usuarioId, Long contaId, Long transacaoId) {
-        return transacaoRepository.findByIdAndContaIdAndContaUsuarioId(transacaoId, contaId, usuarioId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Transação não encontrada."));
+    // Confirma que a transação pertence à conta e ao usuário informados.
+    private Transacao buscarTransacao(
+            Long usuarioId,
+            Long contaId,
+            Long transacaoId) {
+
+        return transacaoRepository
+                .findByIdAndContaIdAndContaUsuarioId(
+                        transacaoId,
+                        contaId,
+                        usuarioId
+                )
+                .orElseThrow(
+                        () -> new RecursoNaoEncontradoException(
+                                "Transação não encontrada."
+                        )
+                );
     }
 
-    // Grava o saldo novo e a transação dentro da mesma transação do banco.
+    // Persiste a conta e a transação na mesma transação do banco.
     private Transacao gravar(Conta conta, Transacao transacao) {
         contaRepository.save(conta);
         return transacaoRepository.save(transacao);
     }
 
-    // Receita e despesa: conta, categoria e valor (sem a descrição digitada).
-    private void auditarMovimento(Long usuarioId, AcaoAuditoria acao, Transacao salva) {
-        auditoriaService.registrar(usuarioId, acao, EntidadeAuditada.TRANSACAO, salva.getId(),
+    // Audita a movimentação sem armazenar a descrição digitada.
+    private void auditarMovimento(
+            Long usuarioId,
+            AcaoAuditoria acao,
+            Transacao salva) {
+
+        auditoriaService.registrar(
+                usuarioId,
+                acao,
+                EntidadeAuditada.TRANSACAO,
+                salva.getId(),
                 "conta=" + salva.getConta().getId()
-                        + "; categoriaId=" + salva.getCategoria().getId()
-                        + "; valor=" + salva.getValor().valor().toPlainString());
+                        + "; categoriaId="
+                        + salva.getCategoria().getId()
+                        + "; valor="
+                        + salva.getValor().valor().toPlainString()
+        );
     }
 }
