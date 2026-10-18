@@ -50,7 +50,7 @@ public class Usuario {
     }
 
     // IMPORTANTE: minúsculas e sem espaços, para "A@x.com" e "a@x.com" serem o mesmo e-mail.
-    private static String normalizarEmail(String email) {
+    public static String normalizarEmail(String email) {
         if (email == null || email.isBlank()) {
             throw new RegraDeNegocioException("O e-mail é obrigatório.");
         }

@@ -33,6 +33,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       CORS_ORIGENS: ${CORS_ORIGENS:-http://localhost:5173}
+      SPRING_PROFILES_ACTIVE: prod
 
 volumes:
   db_data:

@@ -21,17 +21,20 @@ Arquitetura em camadas com regra de dependência apontando para dentro: o domín
 
 ## Boas práticas aplicadas
 
-- **DDD:** `Conta` como Aggregate Root (transações só nascem por `registrarReceita`, `registrarDespesa` e `transferirPara`) e `Dinheiro` como Value Object imutável, que não aceita valor negativo nem mais de 2 casas decimais.
+- **DDD:** `Conta` como Aggregate Root (transações só nascem por `registrarReceita`, `registrarDespesa`, `transferirPara` e `estornar`) e `Dinheiro` como Value Object imutável, que não aceita valor negativo nem mais de 2 casas decimais.
 - **Modelo rico:** sem setters nas regras; a regra "saldo insuficiente" mora dentro da `Conta`, e não nos controllers ou services.
-- **SOLID e Clean Code:** controller traduz HTTP, service coordena, domínio decide, repository persiste; injeção por construtor; sem abstrações "por precaução".
+- **SOLID e Clean Code:** controller traduz HTTP, service coordena, domínio decide, repository persiste; injeção por construtor; regras de segurança centralizadas (busca de conta com dono em um único componente); sem abstrações "por precaução".
 - **Consistência financeira:** operações atômicas com `@Transactional`, concorrência controlada com `@Version` e constraints no PostgreSQL como última barreira.
+- **Histórico imutável:** transações não são apagadas; correções são feitas por **estorno** (lançamento inverso), e o resumo financeiro mostra o efeito líquido.
+- **Auditoria transacional:** ações com efeito são registradas na mesma transação da operação (commit grava os dois, rollback desfaz os dois), sem dados sensíveis.
 - **Segurança:** JWT stateless, BCrypt, proteção contra enumeração de usuários e *timing attack* no login, rate limit (`429`), CORS explícito e autorização por dono (BOLA) testada: "não existe" e "é de outro usuário" dão a mesma resposta (`404`).
+- **Observabilidade:** perfis `dev`/`prod`, logs de segurança sem dados pessoais, Actuator com `health` público e `metrics` autenticado.
 - **API REST:** DTOs separam o contrato das entidades, validação, erros em formato único e documentação OpenAPI/Swagger.
 
 ## Testes e integração contínua
 
-- **69 testes**, entre unitários e de integração com PostgreSQL real via Testcontainers.
-- Cobrem segurança, autorização entre usuários, transferências e atomicidade.
+- **111 testes**, entre unitários e de integração com PostgreSQL real via Testcontainers.
+- Cobrem segurança, autorização entre usuários, transferências, estornos, auditoria e atomicidade.
 - GitHub Actions executa a suíte a cada push e Pull Request.
 
 ## Como executar
@@ -65,10 +68,13 @@ cd backend/api
 | POST | `/contas/{id}/receitas` | Autenticado |
 | POST | `/contas/{id}/despesas` | Autenticado |
 | GET | `/contas/{id}/transacoes` | Autenticado |
+| PATCH | `/contas/{id}/transacoes/{id}` | Autenticado |
+| POST | `/contas/{id}/transacoes/{id}/estorno` | Autenticado |
+| GET | `/contas/{id}/resumo` | Autenticado |
 | POST | `/transferencias` | Autenticado |
 
 ## Limitações e próximos passos
 
-Sem refresh token ou revogação individual de JWT; rate limit limitado a uma instância; sem roles; transferências restritas a contas do mesmo usuário.
+Sem refresh token ou revogação individual de JWT; rate limit limitado a uma instância; sem roles; transferências restritas a contas do mesmo usuário; imutabilidade da auditoria garantida no código (no banco exigiria permissões ou trigger); algumas dependências transitivas têm CVEs sem correção publicada na versão atual do Spring Boot (monitoradas via Dependabot).
 
-Próximas etapas: resumo financeiro, relatórios, edição e exclusão de transações e frontend na branch `front`.
+Próximas etapas: frontend na branch `front`.

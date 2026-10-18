@@ -16,11 +16,11 @@ import java.util.List;
 @Service
 public class ResumoService {
 
-    private final ContaRepository contaRepository;
+    private final ContaDoUsuario contaDoUsuario;
     private final TransacaoRepository transacaoRepository;
 
-    public ResumoService(ContaRepository contaRepository, TransacaoRepository transacaoRepository) {
-        this.contaRepository = contaRepository;
+    public ResumoService(ContaDoUsuario contaDoUsuario, TransacaoRepository transacaoRepository) {
+        this.contaDoUsuario = contaDoUsuario;
         this.transacaoRepository = transacaoRepository;
     }
 
@@ -36,8 +36,7 @@ public class ResumoService {
     @Transactional(readOnly = true)
     public Resumo resumir(Long usuarioId, Long contaId, LocalDate inicio, LocalDate fim) {
         // IMPORTANTE: confirma que a conta é do usuário. Se não for, 404.
-        contaRepository.findByIdAndUsuarioId(contaId, usuarioId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Conta não encontrada."));
+        contaDoUsuario.buscar(usuarioId, contaId);
 
         LocalDate hoje = LocalDate.now();
         LocalDate de = inicio != null ? inicio : hoje.withDayOfMonth(1);
