@@ -13,8 +13,11 @@ export class SessaoService {
   // A memória é a fonte principal; o sessionStorage só faz a sessão sobreviver ao F5.
   private sessao: SessaoArmazenada | null = SessaoService.lerArmazenada();
   private readonly estado = signal(false);
+  private readonly expirada = signal(false);
 
   readonly autenticado = this.estado.asReadonly();
+  // true quando a sessão acabou sem o usuário pedir (vencimento ou 401). A tela de login mostra o aviso.
+  readonly sessaoExpirada = this.expirada.asReadonly();
 
   constructor() {
     // Uma sessão restaurada do F5 pode já estar vencida: token() descarta nesse caso.
@@ -25,6 +28,7 @@ export class SessaoService {
   iniciar(token: string, expiraEmSegundos: number): void {
     this.sessao = { token, expiraEm: Date.now() + expiraEmSegundos * 1000 };
     this.estado.set(true);
+    this.expirada.set(false);
     try {
       sessionStorage.setItem(CHAVE, JSON.stringify(this.sessao));
     } catch {
@@ -39,12 +43,13 @@ export class SessaoService {
       return null;
     }
     if (Date.now() >= atual.expiraEm) {
-      this.encerrar();
+      this.expirar();
       return null;
     }
     return atual.token;
   }
 
+  // Logout pedido pelo usuário: apaga tudo, sem aviso de expiração.
   encerrar(): void {
     this.sessao = null;
     this.estado.set(false);
@@ -53,6 +58,17 @@ export class SessaoService {
     } catch {
       // Nada a fazer: já limpamos a memória.
     }
+  }
+
+  // Sessão invalidada sem ação do usuário. Devolve true só se havia sessão para invalidar,
+  // então quem chama sabe se deve redirecionar (e não redireciona duas vezes).
+  expirar(): boolean {
+    const havia = this.sessao !== null;
+    this.encerrar();
+    if (havia) {
+      this.expirada.set(true);
+    }
+    return havia;
   }
 
   private static lerArmazenada(): SessaoArmazenada | null {

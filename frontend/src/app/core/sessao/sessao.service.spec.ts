@@ -84,4 +84,48 @@ describe('SessaoService', () => {
 
     expect(new SessaoService().token()).toBeNull();
   });
+  it('expirar devolve true e marca a sessão como expirada quando havia sessão', () => {
+    const sessao = new SessaoService();
+    sessao.iniciar('abc', 3600);
+
+    expect(sessao.expirar()).toBe(true);
+    expect(sessao.sessaoExpirada()).toBe(true);
+    expect(sessao.autenticado()).toBe(false);
+  });
+
+  it('expirar devolve false e não marca nada quando não havia sessão', () => {
+    const sessao = new SessaoService();
+
+    expect(sessao.expirar()).toBe(false);
+    expect(sessao.sessaoExpirada()).toBe(false);
+  });
+
+  it('o vencimento marca a sessão como expirada', () => {
+    const sessao = new SessaoService();
+    sessao.iniciar('abc', 60);
+
+    vi.advanceTimersByTime(61_000);
+    sessao.token();
+
+    expect(sessao.sessaoExpirada()).toBe(true);
+  });
+
+  it('um novo login limpa o aviso de expiração', () => {
+    const sessao = new SessaoService();
+    sessao.iniciar('abc', 3600);
+    sessao.expirar();
+
+    sessao.iniciar('def', 3600);
+
+    expect(sessao.sessaoExpirada()).toBe(false);
+  });
+
+  it('o logout do usuário não marca a sessão como expirada', () => {
+    const sessao = new SessaoService();
+    sessao.iniciar('abc', 3600);
+
+    sessao.encerrar();
+
+    expect(sessao.sessaoExpirada()).toBe(false);
+  });
 });
