@@ -52,3 +52,9 @@ body {
   // Largura máxima do conteúdo das telas autenticadas
   --app-largura-conteudo: 72rem;
 }
+// Reset padrão: padding e borda entram no tamanho do elemento.
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}

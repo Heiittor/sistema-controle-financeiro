@@ -7,6 +7,7 @@ import { AuthService } from '../../core/auth/auth.service';
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: `main { padding: var(--app-espaco-4); }`,
   template: `
     <main>
       <h1>Minha conta</h1>
