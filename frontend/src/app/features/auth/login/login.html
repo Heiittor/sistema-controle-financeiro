@@ -1,7 +1,10 @@
-<main class="login">
+<main class="pagina-auth">
   <section class="cartao" aria-labelledby="titulo-login">
     <h1 id="titulo-login">Entrar</h1>
 
+    @if (cadastro() === 'ok') {
+      <p class="aviso sucesso" role="status">Conta criada. Entre para continuar.</p>
+    }
     @if (sessao.sessaoExpirada()) {
       <p class="aviso" role="status">Sua sessão expirou. Entre novamente.</p>
     }
@@ -36,5 +39,7 @@
         {{ enviando() ? 'Entrando...' : 'Entrar' }}
       </button>
     </form>
+
+    <p class="alternativa">Não tem conta? <a routerLink="/cadastro">Criar conta</a></p>
   </section>
 </main>

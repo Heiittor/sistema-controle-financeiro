@@ -1,10 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { mensagemDeErro, segundosDeEspera } from '../../../core/api/mensagem-erro';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -12,7 +12,7 @@ import { SessaoService } from '../../../core/sessao/sessao.service';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [ReactiveFormsModule, RouterLink, MatFormFieldModule, MatInputModule, MatButtonModule],
   templateUrl: './login.html',
   styleUrl: './login.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -21,6 +21,9 @@ export class Login {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   protected readonly sessao = inject(SessaoService);
+
+  // Vem do parâmetro de URL ?cadastro=ok (withComponentInputBinding), depois do cadastro.
+  readonly cadastro = input<string>();
 
   // Validação só orienta o usuário. Quem decide é o backend.
   protected readonly form = inject(NonNullableFormBuilder).group({

@@ -123,4 +123,15 @@ describe('Login', () => {
 
     expect(tela().textContent).toContain('Sua sessão expirou');
   });
+
+  it('mostra o aviso de conta criada quando vem do cadastro', () => {
+    fixture.componentRef.setInput('cadastro', 'ok');
+    fixture.detectChanges();
+
+    expect(tela().textContent).toContain('Conta criada');
+  });
+
+  it('oferece o caminho para o cadastro', () => {
+    expect(tela().querySelector('a[href="/cadastro"]')).not.toBeNull();
+  });
 });
