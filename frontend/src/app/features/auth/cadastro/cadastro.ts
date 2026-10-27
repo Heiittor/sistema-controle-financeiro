@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,9 +5,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
-import { mensagemDeErro } from '../../../core/api/mensagem-erro';
 import { AuthService } from '../../../core/auth/auth.service';
-import { aplicarErrosDoServidor, marcarErroDoServidor } from '../../../shared/forms/erros-do-servidor';
+import { tratarErroDeEnvio } from '../../../shared/forms/erros-do-servidor';
 
 @Component({
   selector: 'app-cadastro',
@@ -50,19 +48,7 @@ export class Cadastro {
         next: () => {
           void this.router.navigate(['/login'], { queryParams: { cadastro: 'ok' } });
         },
-        error: (erro: unknown) => this.falhar(erro),
+        error: (erro: unknown) => this.erro.set(tratarErroDeEnvio(this.form, erro, 'email')),
       });
-  }
-
-  private falhar(erro: unknown): void {
-    // 409: o e-mail já existe. A mensagem da API aparece no próprio campo.
-    if (erro instanceof HttpErrorResponse && erro.status === 409) {
-      marcarErroDoServidor(this.form.controls.email, mensagemDeErro(erro));
-      return;
-    }
-    // 400: cada mensagem vai para o seu campo. Se nenhum campo foi atendido, mensagem geral.
-    if (!aplicarErrosDoServidor(this.form, erro)) {
-      this.erro.set(mensagemDeErro(erro));
-    }
   }
 }

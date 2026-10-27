@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import { FormGroupDirective, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,8 +5,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { finalize } from 'rxjs';
 import { mensagemDeErro } from '../../core/api/mensagem-erro';
+import { tratarErroDeEnvio } from '../../shared/forms/erros-do-servidor';
 import { MoedaPipe } from '../../shared/pipes/moeda-pipe';
-import { aplicarErrosDoServidor, marcarErroDoServidor } from '../../shared/forms/erros-do-servidor';
 import { Conta } from './conta.models';
 import { ContasService } from './contas.service';
 
@@ -78,18 +77,7 @@ export class Contas {
           // A lista vem da API, e não de um item montado aqui. Sem piscar "Carregando".
           this.carregar(false);
         },
-        error: (erro: unknown) => this.falhar(erro),
+        error: (erro: unknown) => this.erro.set(tratarErroDeEnvio(this.form, erro, 'nome')),
       });
-  }
-
-  private falhar(erro: unknown): void {
-    // 409: nome repetido. A mensagem da API aparece no próprio campo.
-    if (erro instanceof HttpErrorResponse && erro.status === 409) {
-      marcarErroDoServidor(this.form.controls.nome, mensagemDeErro(erro));
-      return;
-    }
-    if (!aplicarErrosDoServidor(this.form, erro)) {
-      this.erro.set(mensagemDeErro(erro));
-    }
   }
 }
