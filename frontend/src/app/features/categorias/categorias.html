@@ -1,0 +1,87 @@
+<section aria-labelledby="titulo-nova">
+  <h2 id="titulo-nova">Nova categoria</h2>
+
+  <form [formGroup]="form" (ngSubmit)="criar()" novalidate>
+    <mat-form-field appearance="outline">
+      <mat-label>Nome da categoria</mat-label>
+      <input matInput type="text" formControlName="nome" autocomplete="off" />
+      @if (form.controls.nome.hasError('required')) {
+        <mat-error>Informe o nome da categoria.</mat-error>
+      } @else if (form.controls.nome.hasError('maxlength')) {
+        <mat-error>O nome deve ter no máximo 100 caracteres.</mat-error>
+      } @else if (form.controls.nome.hasError('servidor')) {
+        <mat-error>{{ form.controls.nome.getError('servidor') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Tipo</mat-label>
+      <select matNativeControl formControlName="tipo">
+        <option value="" disabled>Selecione</option>
+        @for (t of tipos; track t.valor) {
+          <option [value]="t.valor">{{ t.rotulo }}</option>
+        }
+      </select>
+      @if (form.controls.tipo.hasError('required')) {
+        <mat-error>Escolha o tipo.</mat-error>
+      } @else if (form.controls.tipo.hasError('servidor')) {
+        <mat-error>{{ form.controls.tipo.getError('servidor') }}</mat-error>
+      }
+    </mat-form-field>
+
+    @if (erro(); as mensagem) {
+      <p class="erro" role="alert">{{ mensagem }}</p>
+    }
+    @if (sucesso(); as mensagem) {
+      <p class="aviso sucesso" role="status">{{ mensagem }}</p>
+    }
+
+    <button mat-flat-button type="submit" [disabled]="enviando()">
+      {{ enviando() ? 'Criando...' : 'Criar categoria' }}
+    </button>
+  </form>
+</section>
+
+<section aria-labelledby="titulo-lista">
+  <h2 id="titulo-lista">Minhas categorias</h2>
+
+  <mat-form-field appearance="outline" class="filtro-campo">
+    <mat-label>Filtrar por tipo</mat-label>
+    <select matNativeControl class="filtro" [value]="filtro() ?? ''" (change)="filtrar($event)">
+      <option value="">Todas</option>
+      @for (t of tipos; track t.valor) {
+        <option [value]="t.valor">{{ t.rotulo }}</option>
+      }
+    </select>
+  </mat-form-field>
+
+  @switch (estado()) {
+    @case ('carregando') {
+      <p role="status">Carregando categorias...</p>
+    }
+    @case ('erro') {
+      <p class="erro" role="alert">{{ erroLista() }}</p>
+      <button mat-stroked-button type="button" class="tentar" (click)="carregar()">Tentar novamente</button>
+    }
+    @case ('pronto') {
+      @if (categorias().length === 0) {
+        <p class="vazio">
+          {{ filtro() === null ? 'Você ainda não tem categorias. Crie a primeira acima.' : 'Nenhuma categoria deste tipo.' }}
+        </p>
+      } @else {
+        <ul class="categorias">
+          @for (categoria of categorias(); track categoria.id) {
+            <li>
+              <span class="nome">{{ categoria.nome }}</span>
+              <span
+                class="tipo"
+                [class.receita]="categoria.tipo === 'RECEITA'"
+                [class.despesa]="categoria.tipo === 'DESPESA'"
+              >{{ rotulo[categoria.tipo] }}</span>
+            </li>
+          }
+        </ul>
+      }
+    }
+  }
+</section>
