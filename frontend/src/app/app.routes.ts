@@ -22,7 +22,7 @@ export const routes: Routes = [
     loadComponent: () => import('./layout/shell/shell').then((m) => m.Shell),
     children: [
       { path: '', pathMatch: 'full', title: 'Dashboard', loadComponent: emConstrucao },
-      { path: 'contas', title: 'Contas', loadComponent: emConstrucao },
+      { path: 'contas', title: 'Contas', loadComponent: () => import('./features/contas/contas').then((m) => m.Contas),},
       { path: 'movimentacoes', title: 'Movimentações', loadComponent: emConstrucao },
       { path: 'categorias', title: 'Categorias', loadComponent: emConstrucao },
       { path: 'transferencias', title: 'Transferências', loadComponent: emConstrucao },

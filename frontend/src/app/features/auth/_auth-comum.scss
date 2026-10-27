@@ -1,3 +1,5 @@
+@use '../../shared/estilos/mensagens';
+
 // Visual compartilhado das telas de autenticação (login e cadastro).
 .pagina-auth {
   min-height: 100vh;
@@ -31,32 +33,6 @@ form {
 
 mat-form-field {
   width: 100%;
-}
-
-.aviso,
-.erro {
-  margin: 0;
-  padding: var(--app-espaco-3);
-  border-radius: var(--mat-sys-corner-medium);
-  font: var(--mat-sys-body-medium);
-}
-
-// Informativo (sessão expirada, tempo de espera do 429)
-.aviso {
-  background: var(--mat-sys-tertiary-container);
-  color: var(--mat-sys-on-tertiary-container);
-}
-
-// Confirmação (conta criada)
-.aviso.sucesso {
-  background: var(--mat-sys-primary-container);
-  color: var(--mat-sys-on-primary-container);
-}
-
-// Falha
-.erro {
-  background: var(--mat-sys-error-container);
-  color: var(--mat-sys-on-error-container);
 }
 
 .alternativa {
