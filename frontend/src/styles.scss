@@ -1,0 +1,60 @@
+// Include theming for Angular Material with `mat.theme()`.
+// This Sass mixin will define CSS variables that are used for styling Angular Material
+// components according to the Material 3 design spec.
+// Learn more about theming and how to use it for your application's
+// custom components at https://material.angular.dev/guide/theming
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+body {
+  // Tema claro. Se um dia houver tema escuro, os tokens --app-* abaixo precisam de variantes.
+  color-scheme: light;
+
+  // Fundo, fonte e cores de texto vêm das variáveis de sistema do Material.
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+
+  // Reset the user agent margin.
+  margin: 0;
+  height: 100%;
+}
+
+// Tokens próprios: só o que o Material não oferece.
+// Todo o resto do visual (cores de marca, erro, superfícies, cantos) vem de --mat-sys-*.
+:root {
+  // Cores financeiras. Contraste sobre branco: ambas 6,5:1 (mínimo WCAG para texto: 4,5:1).
+  // Regra: a cor nunca carrega o significado sozinha; sempre junto de sinal ou texto.
+  --app-receita: #146c3c;
+  --app-despesa: #b3261e;
+
+  // Escala de espaçamento
+  --app-espaco-1: 0.25rem;
+  --app-espaco-2: 0.5rem;
+  --app-espaco-3: 0.75rem;
+  --app-espaco-4: 1rem;
+  --app-espaco-6: 1.5rem;
+  --app-espaco-8: 2rem;
+
+  // Largura máxima do conteúdo das telas autenticadas
+  --app-largura-conteudo: 72rem;
+}
+// Reset padrão: padding e borda entram no tamanho do elemento.
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}

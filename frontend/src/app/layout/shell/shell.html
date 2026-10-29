@@ -1,0 +1,50 @@
+<a class="pular" href="#conteudo" (click)="$event.preventDefault(); principal.focus()">
+  Pular para o conteúdo
+</a>
+
+<mat-sidenav-container class="shell">
+  <mat-sidenav #menu class="sidebar" [mode]="compacto() ? 'over' : 'side'" [opened]="!compacto()">
+    <div class="menu">
+      <p class="marca">
+        <mat-icon>account_balance</mat-icon>
+        <span>Controle Financeiro</span>
+      </p>
+
+      <nav aria-label="Principal">
+        <ul>
+          @for (item of itens; track item.rota) {
+            <li>
+              <a
+                class="item"
+                [routerLink]="item.rota"
+                routerLinkActive="ativo"
+                ariaCurrentWhenActive="page"
+                [routerLinkActiveOptions]="{ exact: item.rota === '/' }"
+                (click)="compacto() && menu.close()"
+              >
+                <mat-icon>{{ item.icone }}</mat-icon>
+                <span>{{ item.rotulo }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      </nav>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <header class="topo">
+      @if (compacto()) {
+        <button mat-icon-button type="button" aria-label="Abrir menu" (click)="menu.open()">
+          <mat-icon>menu</mat-icon>
+        </button>
+      }
+      <h1>{{ titulo() }}</h1>
+      <button mat-button type="button" class="sair" (click)="sair()">Sair</button>
+    </header>
+
+    <main id="conteudo" class="conteudo" tabindex="-1" #principal>
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

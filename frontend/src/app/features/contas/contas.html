@@ -1,0 +1,56 @@
+<section aria-labelledby="titulo-nova">
+  <h2 id="titulo-nova">Nova conta</h2>
+
+  <form [formGroup]="form" (ngSubmit)="criar()" novalidate>
+    <mat-form-field appearance="outline">
+      <mat-label>Nome da conta</mat-label>
+      <input matInput type="text" formControlName="nome" autocomplete="off" />
+      @if (form.controls.nome.hasError('required')) {
+        <mat-error>Informe o nome da conta.</mat-error>
+      } @else if (form.controls.nome.hasError('maxlength')) {
+        <mat-error>O nome deve ter no máximo 100 caracteres.</mat-error>
+      } @else if (form.controls.nome.hasError('servidor')) {
+        <mat-error>{{ form.controls.nome.getError('servidor') }}</mat-error>
+      }
+    </mat-form-field>
+
+    @if (erro(); as mensagem) {
+      <p class="erro" role="alert">{{ mensagem }}</p>
+    }
+    @if (sucesso(); as mensagem) {
+      <p class="aviso sucesso" role="status">{{ mensagem }}</p>
+    }
+
+    <button mat-flat-button type="submit" [disabled]="enviando()">
+      {{ enviando() ? 'Criando...' : 'Criar conta' }}
+    </button>
+  </form>
+</section>
+
+<section aria-labelledby="titulo-lista">
+  <h2 id="titulo-lista">Minhas contas</h2>
+
+  @switch (estado()) {
+    @case ('carregando') {
+      <p role="status">Carregando contas...</p>
+    }
+    @case ('erro') {
+      <p class="erro" role="alert">{{ erroLista() }}</p>
+      <button mat-stroked-button type="button" (click)="carregar()">Tentar novamente</button>
+    }
+    @case ('pronto') {
+      @if (contas().length === 0) {
+        <p class="vazio">Você ainda não tem contas. Crie a primeira acima.</p>
+      } @else {
+        <ul class="contas">
+          @for (conta of contas(); track conta.id) {
+            <li>
+              <span class="nome">{{ conta.nome }}</span>
+              <span class="saldo"><small>Saldo</small> {{ conta.saldo | moeda }}</span>
+            </li>
+          }
+        </ul>
+      }
+    }
+  }
+</section>
