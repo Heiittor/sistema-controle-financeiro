@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
-
+import java.util.Collection;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -28,6 +28,11 @@ public interface TransacaoRepository extends Repository<Transacao, Long> {
 
     // Evita estorno duplicado: existe alguma transação que estorna esta?
     boolean existsByEstornoDe_Id(Long estornoDeId);
+
+    // Dentre os ids informados, quais já têm um estorno apontando para eles. Uma consulta por página.
+    // Os ids vêm de uma página já filtrada por dono, então esta consulta não abre acesso novo.
+    @Query("select t.estornoDe.id from Transacao t where t.estornoDe.id in :ids")
+    List<Long> idsEstornados(@Param("ids") Collection<Long> ids);
 
     // IMPORTANTE: traz a categoria junto, num JOIN só. Evita 1 consulta extra por transação (N+1).
     @EntityGraph(attributePaths = "categoria")
