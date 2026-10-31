@@ -1,0 +1,40 @@
+<h2 mat-dialog-title>Estornar movimentação</h2>
+
+<mat-dialog-content>
+  <p>Você vai estornar esta movimentação:</p>
+
+  <dl class="resumo">
+    <dt>Descrição</dt>
+    <dd>{{ transacao.descricao }}</dd>
+    <dt>Tipo</dt>
+    <dd>{{ info[transacao.tipo].rotulo }}</dd>
+    <dt>Data</dt>
+    <dd>{{ formatarData(transacao.data) }}</dd>
+    <dt>Valor</dt>
+    <dd>{{ transacao.valor | moeda }}</dd>
+  </dl>
+
+  <p>
+    O estorno cria um lançamento inverso e ajusta o saldo da conta. Nada é apagado: a movimentação
+    original continua no histórico, marcada como estornada. Esta ação não pode ser desfeita.
+  </p>
+
+  @if (erro(); as mensagem) {
+    <p class="erro" role="alert">{{ mensagem }}</p>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" class="cancelar" (click)="fechar()">
+    {{ desatualizada() ? 'Fechar' : 'Cancelar' }}
+  </button>
+  <button
+    mat-flat-button
+    type="button"
+    class="confirmar"
+    [disabled]="enviando() || desatualizada()"
+    (click)="confirmar()"
+  >
+    {{ enviando() ? 'Estornando...' : 'Estornar' }}
+  </button>
+</mat-dialog-actions>

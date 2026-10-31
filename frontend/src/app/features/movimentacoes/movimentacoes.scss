@@ -1,0 +1,125 @@
+@use '../../shared/estilos/mensagens';
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-espaco-8);
+}
+
+h2 {
+  margin: 0 0 var(--app-espaco-4);
+  font: var(--mat-sys-title-medium);
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--app-espaco-2) var(--app-espaco-4);
+
+  mat-form-field {
+    flex: 1 1 12rem;
+    max-width: 16rem;
+  }
+
+  button[type='submit'] {
+    margin-top: var(--app-espaco-2);
+  }
+}
+
+.periodo,
+.vazio {
+  margin: 0 0 var(--app-espaco-4);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-espaco-2);
+}
+
+.linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--app-espaco-4);
+  padding: var(--app-espaco-4);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--mat-sys-corner-medium);
+  background: var(--mat-sys-surface-container-lowest);
+}
+
+.bloco {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-espaco-1);
+  min-width: 0;
+}
+
+.descricao {
+  font: var(--mat-sys-title-small);
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.selos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-espaco-1);
+}
+
+.selo {
+  padding: 0.125rem var(--app-espaco-2);
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: var(--mat-sys-corner-full);
+  font: var(--mat-sys-label-small);
+
+  &.destaque {
+    background: var(--mat-sys-tertiary-container);
+    color: var(--mat-sys-on-tertiary-container);
+    border-color: transparent;
+  }
+}
+
+// O sinal (+/−) e o tipo estão escritos; a cor só reforça.
+.valor {
+  font: var(--mat-sys-title-small);
+  white-space: nowrap;
+
+  &.entrada {
+    color: var(--app-receita);
+  }
+
+  &.saida {
+    color: var(--app-despesa);
+  }
+}
+
+.paginacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--app-espaco-4);
+  margin-top: var(--app-espaco-4);
+}
+.lado {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--app-espaco-1);
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}

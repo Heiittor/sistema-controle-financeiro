@@ -1,0 +1,161 @@
+<section aria-labelledby="titulo-filtros">
+  <h2 id="titulo-filtros">Filtros</h2>
+
+  @switch (estadoContas()) {
+    @case ('carregando') {
+      <p role="status">Carregando contas...</p>
+    }
+    @case ('erro') {
+      <p class="erro" role="alert">{{ erroContas() }}</p>
+      <button mat-stroked-button type="button" class="tentar-contas" (click)="carregarContas()">
+        Tentar novamente
+      </button>
+    }
+    @case ('pronto') {
+      @if (contas().length === 0) {
+        <p class="vazio">
+          Você ainda não tem contas. <a routerLink="/contas">Crie uma conta</a> para registrar movimentações.
+        </p>
+      } @else {
+        <button mat-flat-button type="button" class="nova" (click)="novaMovimentacao()">
+          Nova movimentação
+        </button>
+        @if (sucesso(); as mensagem) {
+          <p class="aviso sucesso" role="status">{{ mensagem }}</p>
+        }
+
+        <form class="filtros" [formGroup]="form" (ngSubmit)="aplicar()" novalidate>
+          <mat-form-field appearance="outline">
+            <mat-label>Conta</mat-label>
+            <select matNativeControl formControlName="conta">
+              @for (c of contas(); track c.id) {
+                <option [value]="c.id">{{ c.nome }}</option>
+              }
+            </select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>De</mat-label>
+            <input matInput type="date" formControlName="inicio" />
+            @if (form.controls.inicio.hasError('required')) {
+              <mat-error>Informe a data inicial.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Até</mat-label>
+            <input matInput type="date" formControlName="fim" />
+            @if (form.controls.fim.hasError('required')) {
+              <mat-error>Informe a data final.</mat-error>
+            }
+          </mat-form-field>
+
+          <button mat-flat-button type="submit">Aplicar</button>
+        </form>
+
+        @if (erroFiltro(); as mensagem) {
+          <p class="erro" role="alert">{{ mensagem }}</p>
+        }
+      }
+    }
+  }
+</section>
+
+@if (aplicado(); as filtro) {
+  <section aria-labelledby="titulo-resultado">
+    <h2 id="titulo-resultado">Movimentações</h2>
+    <p class="periodo">
+      Conta: <strong>{{ nomeDaConta() }}</strong> · Período aplicado:
+      {{ formatarData(filtro.inicio) }} a {{ formatarData(filtro.fim) }}
+    </p>
+
+    @switch (estado()) {
+      @case ('carregando') {
+        <p role="status">Carregando movimentações...</p>
+      }
+      @case ('erro') {
+        <p class="erro" role="alert">{{ erro() }}</p>
+        <button mat-stroked-button type="button" class="tentar" (click)="tentarNovamente()">
+          Tentar novamente
+        </button>
+      }
+      @case ('pronto') {
+        @if (resultado(); as r) {
+          @if (r.totalElementos === 0) {
+            <p class="vazio">Nenhuma movimentação neste período.</p>
+          } @else {
+            <ul class="lista">
+              @for (t of r.conteudo; track t.id) {
+                <li class="linha">
+                  <div class="bloco">
+                    <span class="descricao">{{ t.descricao }}</span>
+                    <span class="meta">{{ formatarData(t.data) }} · {{ t.categoriaNome ?? 'Sem categoria' }}</span>
+                    <span class="selos">
+                      <span class="selo">{{ info[t.tipo].rotulo }}</span>
+                      @if (t.estornada) {
+                        <span class="selo destaque">Estornada</span>
+                      }
+                    </span>
+                    @if (t.estornoDeId !== null) {
+                      <span class="meta">Desfaz a transação nº {{ t.estornoDeId }}</span>
+                    }
+                  </div>
+
+                  <div class="lado">
+                    <span
+                      class="valor"
+                      [class.entrada]="info[t.tipo].sentido === 'entrada'"
+                      [class.saida]="info[t.tipo].sentido === 'saida'"
+                    >{{ sinal(t) }} {{ t.valor | moeda }}</span>
+
+                    @if (podeEditar(t)) {
+                      <span class="acoes">
+                        <button
+                          mat-button
+                          type="button"
+                          class="editar"
+                          [attr.aria-label]="'Editar ' + t.descricao"
+                          (click)="editar(t)"
+                        >Editar</button>
+                        @if (podeEstornar(t)) {
+                          <button
+                            mat-button
+                            type="button"
+                            class="estornar"
+                            [attr.aria-label]="'Estornar ' + t.descricao"
+                            (click)="estornar(t)"
+                          >Estornar</button>
+                        }
+                      </span>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+
+            <nav class="paginacao" aria-label="Paginação">
+              <button
+                mat-stroked-button
+                type="button"
+                class="anterior"
+                [disabled]="r.pagina === 0"
+                (click)="carregar(r.pagina - 1)"
+              >Anterior</button>
+              <span role="status">
+                Página {{ r.pagina + 1 }} de {{ r.totalPaginas }} ·
+                {{ r.totalElementos === 1 ? '1 movimentação' : r.totalElementos + ' movimentações' }}
+              </span>
+              <button
+                mat-stroked-button
+                type="button"
+                class="proxima"
+                [disabled]="r.pagina + 1 >= r.totalPaginas"
+                (click)="carregar(r.pagina + 1)"
+              >Próxima</button>
+            </nav>
+          }
+        }
+      }
+    }
+  </section>
+}

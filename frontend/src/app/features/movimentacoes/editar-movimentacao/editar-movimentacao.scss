@@ -1,0 +1,33 @@
+@use '../../../shared/estilos/mensagens';
+
+mat-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-espaco-2);
+  padding-top: var(--app-espaco-2);
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.resumo {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--app-espaco-1) var(--app-espaco-4);
+  margin: 0;
+
+  dt {
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.dica {
+  margin: 0 0 var(--app-espaco-2);
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
