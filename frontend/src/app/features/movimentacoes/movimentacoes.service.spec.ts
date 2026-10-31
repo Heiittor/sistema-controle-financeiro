@@ -45,4 +45,43 @@ describe('MovimentacoesService', () => {
 
     expect(totalPaginas).toBe(3);
   });
+
+  it('estornar envia POST sem corpo para a rota de estorno da transação', () => {
+    service.estornar(7, 42).subscribe();
+
+    const req = backend.expectOne(`${API}/contas/7/transacoes/42/estorno`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toBeNull();
+    req.flush({});
+  });
+
+  it('editar envia PATCH só com categoria e descrição', () => {
+    service.editar(7, 42, { categoriaId: 3, descricao: 'Novo texto' }).subscribe();
+
+    const req = backend.expectOne(`${API}/contas/7/transacoes/42`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ categoriaId: 3, descricao: 'Novo texto' });
+    req.flush({});
+  });
+
+  it('registrar uma receita usa a rota de receitas e envia o corpo sem o tipo', () => {
+    const dados = { categoriaId: 3, descricao: 'Salário', valor: 1000.5, data: '2026-10-05' };
+
+    service.registrar(7, 'RECEITA', dados).subscribe();
+
+    const req = backend.expectOne(`${API}/contas/7/receitas`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(dados);
+    req.flush({});
+  });
+
+  it('registrar uma despesa usa a rota de despesas', () => {
+    service
+      .registrar(7, 'DESPESA', { categoriaId: 4, descricao: 'Mercado', valor: 20, data: '2026-10-05' })
+      .subscribe();
+
+    const req = backend.expectOne(`${API}/contas/7/despesas`);
+    expect(req.request.method).toBe('POST');
+    req.flush({});
+  });
 });

@@ -3,7 +3,8 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_URL } from '../../core/api/api-url';
 import { Pagina } from '../../core/api/pagina';
-import { Transacao } from './transacao.models';
+import { TipoCategoria } from '../categorias/categoria.models';
+import { EdicaoTransacao, NovaTransacao, Transacao } from './transacao.models';
 
 export interface FiltroHistorico {
   inicio: string;
@@ -25,5 +26,23 @@ export class MovimentacoesService {
       .set('page', filtro.pagina)
       .set('size', filtro.tamanho);
     return this.http.get<Pagina<Transacao>>(`${this.apiUrl}/contas/${contaId}/transacoes`, { params });
+  }
+
+  // O tipo escolhe a rota (receitas ou despesas): o cliente não consegue contradizê-la no corpo.
+  registrar(contaId: number, tipo: TipoCategoria, dados: NovaTransacao): Observable<Transacao> {
+    const rota = tipo === 'RECEITA' ? 'receitas' : 'despesas';
+    return this.http.post<Transacao>(`${this.apiUrl}/contas/${contaId}/${rota}`, dados);
+  }
+
+  // Sem corpo: o estorno é sempre o inverso exato da original. Quem define a data é o backend.
+  estornar(contaId: number, transacaoId: number): Observable<Transacao> {
+    return this.http.post<Transacao>(
+      `${this.apiUrl}/contas/${contaId}/transacoes/${transacaoId}/estorno`,
+      null,
+    );
+  }
+
+  editar(contaId: number, transacaoId: number, dados: EdicaoTransacao): Observable<Transacao> {
+    return this.http.patch<Transacao>(`${this.apiUrl}/contas/${contaId}/transacoes/${transacaoId}`, dados);
   }
 }

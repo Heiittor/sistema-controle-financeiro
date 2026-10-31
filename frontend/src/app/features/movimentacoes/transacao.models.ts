@@ -33,3 +33,16 @@ export const INFO_TIPO: Record<TipoTransacao, { rotulo: string; sentido: 'entrad
   ESTORNO_DESPESA: { rotulo: 'Estorno de despesa', sentido: 'entrada' },
   ESTORNO_RECEITA: { rotulo: 'Estorno de receita', sentido: 'saida' },
 };
+
+// Corpo de PATCH /contas/{id}/transacoes/{tid}. Valor, data, tipo e conta não mudam (para corrigir, estorna).
+export interface EdicaoTransacao {
+  categoriaId: number;
+  descricao: string;
+}
+
+export interface NovaTransacao {
+  categoriaId: number;
+  descricao: string;
+  valor: number;
+  data: string;
+}
