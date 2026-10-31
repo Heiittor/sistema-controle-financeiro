@@ -31,13 +31,19 @@ export function aplicarErrosDoServidor(form: FormGroup, erro: unknown): boolean 
 //  - 400 com campos[] vai para cada campo;
 //  - qualquer outro caso devolve a mensagem geral para a tela exibir.
 // Devolve a mensagem geral, ou null quando o erro já foi colocado em algum campo.
-export function tratarErroDeEnvio(form: FormGroup, erro: unknown, campoDeConflito: string): string | null {
-  if (erro instanceof HttpErrorResponse && erro.status === 409) {
+export function tratarErroDeEnvio(
+  form: FormGroup,
+  erro: unknown,
+  campoDeConflito: string | null,
+): string | null {
+  if (erro instanceof HttpErrorResponse && erro.status === 409 && campoDeConflito !== null) {
     const controle = form.get(campoDeConflito);
+
     if (controle !== null) {
       marcarErroDoServidor(controle, mensagemDeErro(erro));
       return null;
     }
   }
+
   return aplicarErrosDoServidor(form, erro) ? null : mensagemDeErro(erro);
 }
