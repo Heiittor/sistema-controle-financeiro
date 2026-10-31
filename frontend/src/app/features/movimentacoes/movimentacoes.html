@@ -17,6 +17,13 @@
           Você ainda não tem contas. <a routerLink="/contas">Crie uma conta</a> para registrar movimentações.
         </p>
       } @else {
+        <button mat-flat-button type="button" class="nova" (click)="novaMovimentacao()">
+          Nova movimentação
+        </button>
+        @if (sucesso(); as mensagem) {
+          <p class="aviso sucesso" role="status">{{ mensagem }}</p>
+        }
+
         <form class="filtros" [formGroup]="form" (ngSubmit)="aplicar()" novalidate>
           <mat-form-field appearance="outline">
             <mat-label>Conta</mat-label>
@@ -93,11 +100,35 @@
                       <span class="meta">Desfaz a transação nº {{ t.estornoDeId }}</span>
                     }
                   </div>
-                  <span
-                    class="valor"
-                    [class.entrada]="info[t.tipo].sentido === 'entrada'"
-                    [class.saida]="info[t.tipo].sentido === 'saida'"
-                  >{{ sinal(t) }} {{ t.valor | moeda }}</span>
+
+                  <div class="lado">
+                    <span
+                      class="valor"
+                      [class.entrada]="info[t.tipo].sentido === 'entrada'"
+                      [class.saida]="info[t.tipo].sentido === 'saida'"
+                    >{{ sinal(t) }} {{ t.valor | moeda }}</span>
+
+                    @if (podeEditar(t)) {
+                      <span class="acoes">
+                        <button
+                          mat-button
+                          type="button"
+                          class="editar"
+                          [attr.aria-label]="'Editar ' + t.descricao"
+                          (click)="editar(t)"
+                        >Editar</button>
+                        @if (podeEstornar(t)) {
+                          <button
+                            mat-button
+                            type="button"
+                            class="estornar"
+                            [attr.aria-label]="'Estornar ' + t.descricao"
+                            (click)="estornar(t)"
+                          >Estornar</button>
+                        }
+                      </span>
+                    }
+                  </div>
                 </li>
               }
             </ul>

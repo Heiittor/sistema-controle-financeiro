@@ -5,8 +5,14 @@ import { provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { API_URL } from '../../core/api/api-url';
 import { Movimentacoes } from './movimentacoes';
+import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
+import { NovaMovimentacao } from './nova-movimentacao/nova-movimentacao';
+import { EditarMovimentacao } from './editar-movimentacao/editar-movimentacao';
+import { EstornarMovimentacao } from './estornar-movimentacao/estornar-movimentacao';
 
 const API = 'http://api.teste';
+
 const CONTAS = [
   { id: 1, nome: 'Nubank', saldo: 0 },
   { id: 2, nome: 'Itaú', saldo: 0 },
@@ -43,7 +49,8 @@ describe('Movimentacoes', () => {
   const tela = () => fixture.nativeElement as HTMLElement;
   // O Intl usa espaço não separável entre "R$" e o número. Normalizamos para comparar.
   const texto = () => tela().textContent!.replace(/\s/g, ' ');
-  const linhas = () => Array.from(tela().querySelectorAll('ul.lista li')).map((li) => li.textContent!.replace(/\s/g, ' '));
+  const linhas = () =>
+    Array.from(tela().querySelectorAll('ul.lista li')).map((li) => li.textContent!.replace(/\s/g, ' '));
   const historico = (contaId = 1) => backend.expectOne((r) => r.url === `${API}/contas/${contaId}/transacoes`);
 
   function preencher(campo: string, valor: string, evento = 'input'): void {
@@ -69,6 +76,7 @@ describe('Movimentacoes', () => {
     // 15:00 UTC de 22/10/2026 = 12:00 em São Paulo: o mês atual é outubro de 2026.
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-22T15:00:00Z'));
+
     TestBed.configureTestingModule({
       imports: [Movimentacoes],
       providers: [
@@ -78,6 +86,7 @@ describe('Movimentacoes', () => {
         { provide: API_URL, useValue: API },
       ],
     });
+
     backend = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(Movimentacoes);
     fixture.detectChanges();
@@ -116,8 +125,23 @@ describe('Movimentacoes', () => {
     abrirComHistorico(
       pagina([
         linha({ id: 1, estornada: true }),
-        linha({ id: 2, tipo: 'ESTORNO_DESPESA', descricao: 'Estorno: Mercado', categoriaId: null, categoriaNome: null, estornoDeId: 1 }),
-        linha({ id: 3, tipo: 'TRANSFERENCIA_SAIDA', descricao: 'Reserva', valor: 50, categoriaId: null, categoriaNome: null, transferenciaId: 'abc' }),
+        linha({
+          id: 2,
+          tipo: 'ESTORNO_DESPESA',
+          descricao: 'Estorno: Mercado',
+          categoriaId: null,
+          categoriaNome: null,
+          estornoDeId: 1,
+        }),
+        linha({
+          id: 3,
+          tipo: 'TRANSFERENCIA_SAIDA',
+          descricao: 'Reserva',
+          valor: 50,
+          categoriaId: null,
+          categoriaNome: null,
+          transferenciaId: 'abc',
+        }),
       ]),
     );
 
@@ -189,10 +213,12 @@ describe('Movimentacoes', () => {
   it('em erro mostra a mensagem da API e permite tentar novamente', () => {
     backend.expectOne(`${API}/contas`).flush(CONTAS);
     fixture.detectChanges();
+
     historico().flush(
       { status: 500, mensagem: 'Erro interno. Tente novamente mais tarde.', timestamp: 'x', campos: [] },
       { status: 500, statusText: 'erro' },
     );
+
     fixture.detectChanges();
     expect(texto()).toContain('Erro interno. Tente novamente mais tarde.');
 
@@ -223,5 +249,135 @@ describe('Movimentacoes', () => {
 
     expect(texto()).toContain('Resposta nova');
     expect(texto()).not.toContain('Resposta antiga');
+  });
+
+  function abrirDialogoCom(resultado: unknown) {
+    return vi.spyOn(TestBed.inject(MatDialog), 'open').mockReturnValue({
+      afterClosed: () => of(resultado),
+    } as never);
+  }
+
+  it('"Nova movimentação" abre o diálogo com as contas e a conta atual; cancelar não recarrega', () => {
+    abrirComHistorico(pagina([linha()]));
+    const abrir = abrirDialogoCom(undefined);
+
+    tela().querySelector<HTMLButtonElement>('button.nova')!.click();
+
+    expect(abrir).toHaveBeenCalledTimes(1);
+    const [componente, config] = abrir.mock.calls[0];
+    expect(componente).toBe(NovaMovimentacao);
+    expect((config as { data: { contaIdInicial: number } }).data.contaIdInicial).toBe(1);
+    backend.expectNone((r) => r.url.includes('/transacoes'));
+  });
+
+  it('depois de registrar, avisa e recarrega o histórico pela API, sem inventar a linha', () => {
+    abrirComHistorico(pagina([]));
+    abrirDialogoCom({ contaId: 1, data: '2026-10-10' });
+
+    tela().querySelector<HTMLButtonElement>('button.nova')!.click();
+    historico().flush(pagina([linha({ id: 9, descricao: 'Recém registrada' })]));
+    fixture.detectChanges();
+
+    expect(texto()).toContain('Movimentação registrada.');
+    expect(texto()).not.toContain('fora da conta ou do período');
+    expect(texto()).toContain('Recém registrada');
+  });
+
+  it('avisa quando a movimentação foi registrada fora do período exibido', () => {
+    abrirComHistorico(pagina([]));
+    abrirDialogoCom({ contaId: 1, data: '2026-12-01' });
+
+    tela().querySelector<HTMLButtonElement>('button.nova')!.click();
+    historico().flush(pagina([]));
+    fixture.detectChanges();
+
+    expect(texto()).toContain('Movimentação registrada em 01/12/2026, fora da conta ou do período exibidos.');
+  });
+
+  const itemDaLista = (indice: number) => tela().querySelectorAll('ul.lista li')[indice];
+
+  it('mostra Editar e Estornar só onde a API aceita, e nunca um botão de excluir', () => {
+    abrirComHistorico(
+      pagina([
+        linha({ id: 1 }),
+        linha({ id: 2, estornada: true }),
+        linha({
+          id: 3,
+          tipo: 'TRANSFERENCIA_SAIDA',
+          categoriaId: null,
+          categoriaNome: null,
+          transferenciaId: 'abc',
+        }),
+        linha({ id: 4, tipo: 'ESTORNO_DESPESA', categoriaId: null, categoriaNome: null, estornoDeId: 2 }),
+        linha({ id: 5, tipo: 'RECEITA' }),
+      ]),
+    );
+
+    expect(tela().querySelectorAll('button.editar')).toHaveLength(3);
+    expect(tela().querySelectorAll('button.estornar')).toHaveLength(2);
+
+    // Já estornada: pode editar, mas não estornar de novo.
+    expect(itemDaLista(1).querySelector('button.editar')).not.toBeNull();
+    expect(itemDaLista(1).querySelector('button.estornar')).toBeNull();
+
+    // Transferência e estorno não têm ações.
+    expect(itemDaLista(2).querySelector('button')).toBeNull();
+    expect(itemDaLista(3).querySelector('button')).toBeNull();
+    expect(texto()).not.toContain('Excluir');
+  });
+
+  it('depois de estornar, avisa e recarrega o histórico pela API', () => {
+    abrirComHistorico(pagina([linha({ id: 1 })]));
+    const abrir = abrirDialogoCom('ok');
+
+    tela().querySelector<HTMLButtonElement>('button.estornar')!.click();
+
+    const [componente, config] = abrir.mock.calls[0];
+    expect(componente).toBe(EstornarMovimentacao);
+    expect((config as { data: object }).data).toMatchObject({ contaId: 1, transacao: { id: 1 } });
+
+    historico().flush(pagina([linha({ id: 1, estornada: true })]));
+    fixture.detectChanges();
+
+    expect(texto()).toContain('Estorno registrado com a data de hoje.');
+    expect(texto()).toContain('Estornada');
+  });
+
+  it('se o diálogo diz que a lista estava desatualizada, recarrega sem avisar sucesso', () => {
+    abrirComHistorico(pagina([linha({ id: 1 })]));
+    abrirDialogoCom('recarregar');
+
+    tela().querySelector<HTMLButtonElement>('button.estornar')!.click();
+    historico().flush(pagina([linha({ id: 1, estornada: true })]));
+    fixture.detectChanges();
+
+    expect(texto()).not.toContain('Estorno registrado');
+    expect(texto()).toContain('Estornada');
+  });
+
+  it('depois de editar, avisa e recarrega a MESMA página pela API', () => {
+    abrirComHistorico(pagina([linha({ id: 1 })], { pagina: 1, totalElementos: 45, totalPaginas: 3 }));
+    const abrir = abrirDialogoCom(true);
+
+    tela().querySelector<HTMLButtonElement>('button.editar')!.click();
+
+    expect(abrir.mock.calls[0][0]).toBe(EditarMovimentacao);
+    const req = historico();
+    expect(req.request.params.get('page')).toBe('1');
+    req.flush(pagina([linha({ id: 1, descricao: 'Texto novo' })], { pagina: 1, totalElementos: 45, totalPaginas: 3 }));
+    fixture.detectChanges();
+
+    expect(texto()).toContain('Movimentação atualizada.');
+    expect(texto()).toContain('Texto novo');
+  });
+
+  it('cancelar o diálogo de edição ou de estorno não recarrega nada', () => {
+    abrirComHistorico(pagina([linha({ id: 1 })]));
+    abrirDialogoCom(undefined);
+
+    tela().querySelector<HTMLButtonElement>('button.editar')!.click();
+    tela().querySelector<HTMLButtonElement>('button.estornar')!.click();
+
+    backend.expectNone((r) => r.url.includes('/transacoes'));
   });
 });

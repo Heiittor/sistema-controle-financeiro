@@ -111,3 +111,15 @@ h2 {
   gap: var(--app-espaco-4);
   margin-top: var(--app-espaco-4);
 }
+.lado {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--app-espaco-1);
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}

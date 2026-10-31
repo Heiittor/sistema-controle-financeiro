@@ -1,0 +1,106 @@
+<h2 mat-dialog-title>Nova movimentação</h2>
+
+<form [formGroup]="form" (ngSubmit)="registrar()" novalidate>
+  <mat-dialog-content>
+    <mat-form-field appearance="outline">
+      <mat-label>Tipo</mat-label>
+      <select matNativeControl formControlName="tipo">
+        @for (t of tipos; track t.valor) {
+          <option [value]="t.valor">{{ t.rotulo }}</option>
+        }
+      </select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Conta</mat-label>
+      <select matNativeControl formControlName="conta">
+        @for (c of contas; track c.id) {
+          <option [value]="c.id">{{ c.nome }}</option>
+        }
+      </select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Categoria</mat-label>
+      <select matNativeControl formControlName="categoriaId">
+        <option value="" disabled>Selecione</option>
+        @for (c of categorias(); track c.id) {
+          <option [value]="c.id">{{ c.nome }}</option>
+        }
+      </select>
+      @if (form.controls.categoriaId.hasError('required')) {
+        <mat-error>Escolha a categoria.</mat-error>
+      } @else if (form.controls.categoriaId.hasError('servidor')) {
+        <mat-error>{{ form.controls.categoriaId.getError('servidor') }}</mat-error>
+      }
+    </mat-form-field>
+
+    @switch (estadoCategorias()) {
+      @case ('carregando') {
+        <p role="status">Carregando categorias...</p>
+      }
+      @case ('erro') {
+        <p class="erro" role="alert">{{ erroCategorias() }}</p>
+        <button mat-stroked-button type="button" class="tentar" (click)="carregarCategorias()">
+          Tentar novamente
+        </button>
+      }
+      @case ('pronto') {
+        @if (semCategorias()) {
+          <p class="aviso" role="status">
+            Você ainda não tem categorias deste tipo.
+            <a routerLink="/categorias" (click)="cancelar()">Crie uma categoria</a>.
+          </p>
+        }
+      }
+    }
+
+    <mat-form-field appearance="outline">
+      <mat-label>Descrição</mat-label>
+      <input matInput type="text" formControlName="descricao" autocomplete="off" />
+      @if (form.controls.descricao.hasError('required')) {
+        <mat-error>Informe a descrição.</mat-error>
+      } @else if (form.controls.descricao.hasError('maxlength')) {
+        <mat-error>A descrição deve ter no máximo 255 caracteres.</mat-error>
+      } @else if (form.controls.descricao.hasError('servidor')) {
+        <mat-error>{{ form.controls.descricao.getError('servidor') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Valor (R$)</mat-label>
+      <input matInput type="text" inputmode="decimal" formControlName="valor" autocomplete="off" />
+      <mat-hint>Use vírgula ou ponto, até 2 casas. Sem separador de milhar.</mat-hint>
+      @if (form.controls.valor.hasError('required')) {
+        <mat-error>Informe o valor.</mat-error>
+      } @else if (form.controls.valor.hasError('formato')) {
+        <mat-error>Use apenas números, com vírgula ou ponto e até 2 casas decimais.</mat-error>
+      } @else if (form.controls.valor.hasError('positivo')) {
+        <mat-error>O valor deve ser maior que zero.</mat-error>
+      } @else if (form.controls.valor.hasError('servidor')) {
+        <mat-error>{{ form.controls.valor.getError('servidor') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Data</mat-label>
+      <input matInput type="date" formControlName="data" />
+      @if (form.controls.data.hasError('required')) {
+        <mat-error>Informe a data.</mat-error>
+      } @else if (form.controls.data.hasError('servidor')) {
+        <mat-error>{{ form.controls.data.getError('servidor') }}</mat-error>
+      }
+    </mat-form-field>
+
+    @if (erro(); as mensagem) {
+      <p class="erro" role="alert">{{ mensagem }}</p>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" class="cancelar" (click)="cancelar()">Cancelar</button>
+    <button mat-flat-button type="submit" [disabled]="enviando() || semCategorias()">
+      {{ enviando() ? 'Registrando...' : 'Registrar' }}
+    </button>
+  </mat-dialog-actions>
+</form>
