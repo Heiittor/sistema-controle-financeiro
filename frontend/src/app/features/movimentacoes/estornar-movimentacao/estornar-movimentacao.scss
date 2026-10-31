@@ -1,0 +1,17 @@
+@use '../../../shared/estilos/mensagens';
+
+.resumo {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--app-espaco-1) var(--app-espaco-4);
+  margin: 0 0 var(--app-espaco-4);
+
+  dt {
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
