@@ -1,0 +1,36 @@
+@use '@angular/material' as mat;
+
+// O painel é criado no overlay do CDK, fora do DOM da tela.
+// O seletor limita estes tokens ao autocomplete de instituições.
+@mixin tema {
+  .bancos-autocomplete.mat-mdc-autocomplete-panel {
+    @include mat.autocomplete-overrides(
+      (
+        background-color: #fff,
+        container-shape: 18px,
+        container-elevation-shadow: 0 8px 24px rgb(22 52 115 / 18%),
+      )
+    );
+    @include mat.option-overrides(
+      (
+        label-text-color: #0b123c,
+        label-text-size: 16px,
+        label-text-weight: 600,
+        selected-state-layer-color: #dce7ff,
+        selected-state-label-text-color: #0b123c,
+        focus-state-layer-color: #dce7ff,
+        hover-state-layer-color: #edf3ff,
+      )
+    );
+    padding: 8px;
+    margin-top: 4px;
+    max-height: min(440px, 55vh);
+    border: 1px solid #dbe4f9;
+    box-sizing: border-box;
+    mat-option {
+      min-height: 52px;
+      padding: 5px 12px;
+      border-radius: 10px;
+    }
+  }
+}

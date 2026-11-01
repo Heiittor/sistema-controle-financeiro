@@ -100,6 +100,38 @@ describe('Categorias', () => {
     expect(texto()).toContain('Você ainda não tem categorias');
   });
 
+  it('ignora uma resposta antiga depois que o filtro mais recente já respondeu', () => {
+    responderLista([]);
+    escolher('select.filtro', 'RECEITA');
+    const antiga = backend.expectOne(`${API}/categorias?tipo=RECEITA`);
+    escolher('select.filtro', 'DESPESA');
+    responderLista([{ id: 2, nome: 'Mercado', tipo: 'DESPESA' }], '?tipo=DESPESA');
+
+    antiga.flush([{ id: 1, nome: 'Salário', tipo: 'RECEITA' }]);
+    fixture.detectChanges();
+
+    expect(itens()).toHaveLength(1);
+    expect(itens()[0]).toContain('Mercado');
+    expect(texto()).not.toContain('Salário');
+  });
+
+  it('ignora erro antigo e mantém o carregamento da consulta atual', () => {
+    responderLista([]);
+    escolher('select.filtro', 'RECEITA');
+    const antiga = backend.expectOne(`${API}/categorias?tipo=RECEITA`);
+    escolher('select.filtro', 'DESPESA');
+    fixture.detectChanges();
+
+    const { corpo, opcoes } = corpoDeErro(500, 'Falha antiga');
+    antiga.flush(corpo, opcoes);
+    fixture.detectChanges();
+
+    expect(texto()).toContain('Carregando categorias');
+    expect(texto()).not.toContain('Falha antiga');
+    responderLista([{ id: 2, nome: 'Mercado', tipo: 'DESPESA' }], '?tipo=DESPESA');
+    expect(itens()[0]).toContain('Mercado');
+  });
+
   it('não envia o formulário vazio e mostra os erros', () => {
     responderLista([]);
 

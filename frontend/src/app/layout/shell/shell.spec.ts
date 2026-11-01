@@ -36,9 +36,11 @@ describe('Shell (tela larga)', () => {
   it('lista os seis itens de navegação', async () => {
     const tela = await abrir('/');
 
-    const rotulos = Array.from(tela.querySelectorAll('nav a.item span')).map((s) => s.textContent?.trim());
+    const rotulos = Array.from(tela.querySelectorAll('nav a.item span')).map((s) =>
+      s.textContent?.trim(),
+    );
     expect(rotulos).toEqual([
-      'Dashboard',
+      'Visão geral',
       'Contas',
       'Movimentações',
       'Categorias',
@@ -77,6 +79,33 @@ describe('Shell (tela larga)', () => {
     expect(sessao.autenticado()).toBe(false);
     expect(navegar).toHaveBeenCalledWith('/login');
   });
+
+  it('recolhe e expande o menu preservando nomes acessíveis e a rota ativa', async () => {
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/contas');
+    const tela = harness.routeNativeElement!;
+    tela.querySelector<HTMLButtonElement>('button[aria-label="Recolher menu"]')!.click();
+    harness.detectChanges();
+
+    expect(tela.querySelector('.sidebar')!.classList.contains('recolhida')).toBe(true);
+    expect(
+      tela.querySelector('button[aria-label="Expandir menu"]')!.getAttribute('aria-expanded'),
+    ).toBe('false');
+    expect(tela.querySelector('a[href="/contas"]')!.getAttribute('aria-label')).toBe('Contas');
+    expect(tela.querySelector('a[href="/contas"]')!.getAttribute('aria-current')).toBe('page');
+
+    tela.querySelector<HTMLButtonElement>('button[aria-label="Expandir menu"]')!.click();
+    harness.detectChanges();
+    expect(tela.querySelector('.sidebar')!.classList.contains('recolhida')).toBe(false);
+  });
+
+  it('o atalho de teclado transfere o foco ao conteúdo principal', async () => {
+    const tela = await abrir('/');
+    const principal = tela.querySelector<HTMLElement>('main')!;
+    const focar = vi.spyOn(principal, 'focus');
+    tela.querySelector<HTMLAnchorElement>('.pular')!.click();
+    expect(focar).toHaveBeenCalledOnce();
+  });
 });
 
 describe('Shell (tela compacta)', () => {
@@ -98,5 +127,21 @@ describe('Shell (tela compacta)', () => {
     const tela = await abrir('/');
 
     expect(tela.querySelector('button[aria-label="Abrir menu"]')).not.toBeNull();
+  });
+
+  it('abre e fecha o menu móvel com controles acessíveis', async () => {
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/');
+    const tela = harness.routeNativeElement!;
+    const abrirMenu = tela.querySelector<HTMLButtonElement>('button[aria-label="Abrir menu"]')!;
+    expect(abrirMenu.getAttribute('aria-expanded')).toBe('false');
+    expect(tela.querySelector('.recolher')).toBeNull();
+
+    abrirMenu.click();
+    harness.detectChanges();
+    expect(abrirMenu.getAttribute('aria-expanded')).toBe('true');
+    tela.querySelector<HTMLButtonElement>('button[aria-label="Fechar menu"]')!.click();
+    harness.detectChanges();
+    expect(abrirMenu.getAttribute('aria-expanded')).toBe('false');
   });
 });

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 340" fill="none">
+<defs>
+ <linearGradient id="fundo" x1="80" y1="60" x2="360" y2="290" gradientUnits="userSpaceOnUse"><stop stop-color="#d0e3ff"/><stop offset="1" stop-color="#edf3ff"/></linearGradient>
+ <linearGradient id="cartao1" x1="120" y1="40" x2="260" y2="140" gradientUnits="userSpaceOnUse"><stop stop-color="#929aff"/><stop offset="1" stop-color="#263dff"/></linearGradient>
+ <linearGradient id="cartao2" x1="150" y1="80" x2="260" y2="180" gradientUnits="userSpaceOnUse"><stop stop-color="#e0f4ff"/><stop offset=".55" stop-color="#8dc4ff"/><stop offset="1" stop-color="#3b7cff"/></linearGradient>
+ <linearGradient id="corpo" x1="90" y1="120" x2="300" y2="290" gradientUnits="userSpaceOnUse"><stop stop-color="#30c7ff"/><stop offset=".5" stop-color="#0566ff"/><stop offset="1" stop-color="#0035e9"/></linearGradient>
+ <linearGradient id="aba" x1="270" y1="170" x2="330" y2="220" gradientUnits="userSpaceOnUse"><stop stop-color="#5eb8ff"/><stop offset=".4" stop-color="#2879ff"/><stop offset="1" stop-color="#003ce6"/></linearGradient>
+ <radialGradient id="botao"><stop stop-color="#fff"/><stop offset="1" stop-color="#a2dbff"/></radialGradient>
+ <filter id="sombra" x="-40%" y="-50%" width="190%" height="210%"><feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#245ce3" flood-opacity=".24"/></filter>
+</defs>
+<path d="M52 199C21 132 75 44 156 33C229 19 255 94 308 114C356 132 414 182 373 249C340 302 217 313 128 289C78 275 65 240 52 199Z" fill="url(#fundo)"/>
+<ellipse cx="221" cy="290" rx="117" ry="15" fill="#8bb5fa" opacity=".2"/>
+<g filter="url(#sombra)">
+ <rect x="126" y="66" width="188" height="100" rx="16" transform="rotate(-17 126 66)" fill="url(#cartao1)"/>
+ <path d="m252 48 22-6" stroke="#8eb4ff" stroke-width="7" stroke-linecap="round"/>
+ <rect x="128" y="87" width="212" height="104" rx="17" transform="rotate(-9 128 87)" fill="url(#cartao2)"/>
+ <path d="m170 116 121-19" stroke="#4477fa" stroke-width="9" stroke-linecap="round" opacity=".65"/>
+ <path d="M107 110L310 128C328 130 336 142 334 159L319 271C317 287 307 294 292 291L96 271C78 269 70 260 72 242L85 132C87 115 94 108 107 110Z" fill="url(#corpo)"/>
+ <path d="m109 113 199 18" stroke="#83d9ff" stroke-opacity=".5" stroke-width="2"/>
+ <path d="M277 178L336 184C345 185 348 191 346 201L342 231C341 241 335 244 326 243L272 237C257 235 252 224 254 209L255 199C257 183 263 176 277 178Z" fill="url(#aba)" stroke="#5fa5ff" stroke-width="1.5"/>
+ <circle cx="282" cy="209" r="12" fill="#1d53d3" opacity=".35"/>
+ <circle cx="281" cy="205" r="11" fill="url(#botao)"/>
+</g>
+<path d="m350 70 4-15m15 31 13-11m-8 31 16-2" stroke="#3675ff" stroke-width="7" stroke-linecap="round"/>
+</svg>

@@ -2,49 +2,136 @@
   Pular para o conteúdo
 </a>
 
-<mat-sidenav-container class="shell">
-  <mat-sidenav #menu class="sidebar" [mode]="compacto() ? 'over' : 'side'" [opened]="!compacto()">
+<mat-sidenav-container
+  class="shell"
+  [class.painel]="titulo() === 'Dashboard' || titulo() === 'Contas'"
+  [class.tela-contas]="titulo() === 'Contas'"
+  autosize
+>
+  <mat-sidenav
+    #menu
+    id="menu-principal"
+    class="sidebar"
+    [class.recolhida]="recolhida() && !compacto()"
+    [mode]="compacto() ? 'over' : 'side'"
+    [opened]="!compacto()"
+  >
     <div class="menu">
       <p class="marca">
-        <mat-icon>account_balance</mat-icon>
-        <span>Controle Financeiro</span>
+        @if (titulo() === 'Dashboard' || titulo() === 'Contas') {
+          <svg class="marca-painel" viewBox="0 0 54 58" aria-hidden="true">
+            <g fill="currentColor">
+              <rect x="2" y="40" width="12" height="16" rx="1" />
+              <rect x="19" y="29" width="12" height="27" rx="1" />
+              <rect x="36" y="19" width="12" height="37" rx="1" />
+            </g>
+            <path
+              d="m3 31 15-12 9 4L45 5m-10 0h10v10"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="4"
+              stroke-linejoin="round"
+            />
+          </svg>
+        } @else {
+          <mat-icon>account_balance</mat-icon>
+        }
+        <span class="marca-texto">
+          @if (titulo() === 'Dashboard') {
+            Finanças
+          } @else {
+            Controle<br />Financeiro
+          }
+        </span>
       </p>
 
+      @if (compacto()) {
+        <button
+          mat-icon-button
+          type="button"
+          class="fechar"
+          aria-label="Fechar menu"
+          (click)="menu.close()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+
       <nav aria-label="Principal">
+        <p class="secao-menu" aria-hidden="true">Finanças pessoais</p>
         <ul>
           @for (item of itens; track item.rota) {
             <li>
               <a
                 class="item"
+                [attr.aria-label]="
+                  titulo() === 'Dashboard' && item.rota === '/' ? 'Visão geral' : item.rotulo
+                "
+                [attr.title]="recolhida() && !compacto() ? item.rotulo : null"
                 [routerLink]="item.rota"
                 routerLinkActive="ativo"
                 ariaCurrentWhenActive="page"
                 [routerLinkActiveOptions]="{ exact: item.rota === '/' }"
                 (click)="compacto() && menu.close()"
               >
-                <mat-icon>{{ item.icone }}</mat-icon>
-                <span>{{ item.rotulo }}</span>
+                <mat-icon>{{
+                  titulo() === 'Dashboard' && item.rota === '/' ? 'home' : item.icone
+                }}</mat-icon>
+                <span class="rotulo">{{
+                  titulo() === 'Dashboard' && item.rota === '/' ? 'Visão geral' : item.rotulo
+                }}</span>
               </a>
             </li>
           }
         </ul>
       </nav>
+      @if (!compacto()) {
+        <button
+          mat-icon-button
+          type="button"
+          class="recolher"
+          [attr.aria-label]="recolhida() ? 'Expandir menu' : 'Recolher menu'"
+          [attr.aria-expanded]="!recolhida()"
+          aria-controls="menu-principal"
+          (click)="recolhida.set(!recolhida())"
+        >
+          <mat-icon>{{ recolhida() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+        </button>
+      }
+      @if (titulo() === 'Dashboard' || titulo() === 'Contas') {
+        <div class="sessao-painel">
+          <p><mat-icon>account_circle</mat-icon>Minha conta</p>
+          <button type="button" class="sair-painel" (click)="sair()">
+            <mat-icon>logout</mat-icon>Sair
+          </button>
+        </div>
+      }
     </div>
   </mat-sidenav>
 
   <mat-sidenav-content>
     <header class="topo">
       @if (compacto()) {
-        <button mat-icon-button type="button" aria-label="Abrir menu" (click)="menu.open()">
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Abrir menu"
+          aria-controls="menu-principal"
+          [attr.aria-expanded]="menu.opened"
+          (click)="menu.open()"
+        >
           <mat-icon>menu</mat-icon>
         </button>
       }
       <h1>{{ titulo() }}</h1>
-      <button mat-button type="button" class="sair" (click)="sair()">Sair</button>
+      <button mat-button type="button" class="sair" (click)="sair()">
+        <mat-icon>logout</mat-icon>Sair
+      </button>
     </header>
 
     <main id="conteudo" class="conteudo" tabindex="-1" #principal>
       <router-outlet />
     </main>
+    <footer class="rodape">Sistema de Controle Financeiro</footer>
   </mat-sidenav-content>
 </mat-sidenav-container>

@@ -13,7 +13,11 @@ describe('ContasService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: API }],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: API_URL, useValue: API },
+      ],
     });
     service = TestBed.inject(ContasService);
     backend = TestBed.inject(HttpTestingController);

@@ -27,6 +27,7 @@ export class Cadastro {
   });
 
   protected readonly enviando = signal(false);
+  protected readonly senhaVisivel = signal(false);
   protected readonly erro = signal<string | null>(null);
 
   protected cadastrar(): void {

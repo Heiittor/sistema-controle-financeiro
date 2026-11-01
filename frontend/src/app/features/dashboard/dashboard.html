@@ -1,0 +1,258 @@
+<header class="cabecalho">
+  <div>
+    <h1>Visão geral</h1>
+    <p>Acompanhe sua saúde financeira</p>
+  </div>
+  <div class="acoes">
+    <form [formGroup]="form" (ngSubmit)="carregar()" class="filtro" novalidate>
+      <label class="mes"
+        ><mat-icon aria-hidden="true">calendar_month</mat-icon
+        ><span class="sr-only">Mês de referência</span
+        ><input type="month" formControlName="mes" min="0001-06" (change)="carregar()"
+      /></label>
+      <button type="submit" class="sr-only aplicar">Aplicar período</button>
+    </form>
+    <a class="nova" routerLink="/movimentacoes"><mat-icon>add</mat-icon>Nova movimentação</a>
+  </div>
+</header>
+@if (erroPeriodo()) {
+  <p role="alert" class="erro">{{ erroPeriodo() }}</p>
+}
+@switch (estado()) {
+  @case ('carregando') {
+    <p role="status">Carregando seu panorama financeiro...</p>
+  }
+  @case ('erro') {
+    <p role="alert" class="erro">{{ erro() }}</p>
+    <button type="button" class="tentar" (click)="carregar()">Tentar novamente</button>
+  }
+  @case ('pronto') {
+    @if (dados(); as d) {
+      @if (d.semContas) {
+        <section class="vazio">
+          <h3>Comece pela sua primeira conta</h3>
+          <p>Crie uma conta para registrar receitas, despesas e acompanhar seu dinheiro.</p>
+          <a mat-flat-button routerLink="/contas">Criar conta</a>
+        </section>
+      } @else {
+        <p class="sr-only">
+          Período: {{ formatarData(d.resumo.inicio) }} a {{ formatarData(d.resumo.fim) }}
+        </p>
+        <dl class="indicadores">
+          <div class="indicador saldo">
+            <dt>
+              <span class="icone-card"><mat-icon>account_balance_wallet</mat-icon></span
+              >Saldo total
+            </dt>
+            <dd><app-valor-animado [valor]="d.resumo.saldoTotal" /></dd>
+            <small>Saldos atuais de todas as contas</small>
+          </div>
+          <div class="indicador receita">
+            <dt>
+              <span class="icone-card"><mat-icon>south</mat-icon></span
+              >Receitas
+            </dt>
+            <dd><app-valor-animado [valor]="d.resumo.totalReceitas" /></dd>
+            <small>No mês selecionado</small
+            ><app-grafico-dashboard
+              class="mini"
+              [altura]="58"
+              [configuracao]="d.miniReceitas"
+              descricao="Evolução de receitas nos últimos seis meses"
+            />
+          </div>
+          <div class="indicador despesa">
+            <dt>
+              <span class="icone-card"><mat-icon>north</mat-icon></span
+              >Despesas
+            </dt>
+            <dd><app-valor-animado [valor]="d.resumo.totalDespesas" /></dd>
+            <small>No mês selecionado</small
+            ><app-grafico-dashboard
+              class="mini"
+              [altura]="58"
+              [configuracao]="d.miniDespesas"
+              descricao="Evolução de despesas nos últimos seis meses"
+            />
+          </div>
+          <div class="indicador economia">
+            <dt>
+              <span class="icone-card"><mat-icon>savings</mat-icon></span
+              >Economia do mês
+            </dt>
+            <dd><app-valor-animado [valor]="d.resumo.saldoDoPeriodo" /></dd>
+            <small>Resultado do mês: receitas menos despesas</small>
+          </div>
+        </dl>
+        @if (d.resumo.totalReceitas === 0 && d.resumo.totalDespesas === 0) {
+          <p role="status">Nenhuma receita ou despesa não estornada neste período.</p>
+        }
+        <div class="graficos">
+          <section class="cartao evolucao" aria-labelledby="titulo-evolucao">
+            <div class="titulo-grafico">
+              <h3 id="titulo-evolucao"><mat-icon>bar_chart</mat-icon>Receitas x despesas</h3>
+              <div class="chaves">
+                <span><i class="azul"></i>Receitas</span
+                ><span><i class="vermelho"></i>Despesas</span>
+              </div>
+            </div>
+            <app-grafico-dashboard
+              [configuracao]="d.linha"
+              [altura]="230"
+              descricao="Evolução mensal de receitas e despesas. Os valores estão na tabela abaixo."
+            />
+            <div class="dados-mensais">
+              <p class="sr-only">
+                {{ formatarData(d.inicioSerie) }} a {{ formatarData(d.fimSerie) }}
+              </p>
+              <details>
+                <summary>Ver valores por mês</summary>
+                <div class="tabela">
+                  <table>
+                    <caption>
+                      Receitas e despesas mensais
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Mês</th>
+                        <th scope="col">Receitas</th>
+                        <th scope="col">Despesas</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (mes of d.serie; track mes.mes) {
+                        <tr>
+                          <th scope="row">{{ rotuloMes(mes.mes) }}</th>
+                          <td>{{ mes.receitas | moeda }}</td>
+                          <td>{{ mes.despesas | moeda }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            </div>
+          </section>
+          <section class="cartao categorias" aria-labelledby="titulo-categorias">
+            <h3 id="titulo-categorias"><mat-icon>pie_chart</mat-icon>Despesas por categoria</h3>
+            @if (d.resumo.porCategoria.length === 0) {
+              <p class="vazio">Nenhuma despesa não estornada neste período.</p>
+            } @else {
+              <div class="distribuicao">
+                <div class="rosca">
+                  <app-grafico-dashboard
+                    [configuracao]="d.rosca"
+                    [altura]="240"
+                    [destaque]="selecionada()"
+                    descricao="Distribuição das despesas. Categorias e valores estão na legenda ao lado."
+                  />
+                  <div class="centro-rosca" aria-hidden="true">
+                    <strong>{{ d.resumo.totalDespesas | moeda }}</strong
+                    ><span>Total</span>
+                  </div>
+                </div>
+                <ul class="legenda" aria-label="Valores por categoria; selecione para destacar">
+                  @for (
+                    categoria of d.resumo.porCategoria;
+                    track categoria.categoriaId;
+                    let i = $index
+                  ) {
+                    <li>
+                      <button
+                        type="button"
+                        [attr.aria-pressed]="selecionada() === i"
+                        (click)="selecionada.set(selecionada() === i ? null : i)"
+                      >
+                        <i
+                          class="cor"
+                          aria-hidden="true"
+                          [style.background]="cores[i % cores.length]"
+                        ></i
+                        ><span>{{ categoria.categoriaNome }}</span
+                        ><strong
+                          [attr.title]="categoria.total | moeda"
+                          [attr.aria-label]="categoria.total | moeda"
+                          >{{ participacao(categoria.total, d.resumo.totalDespesas) }}</strong
+                        >
+                      </button>
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+          </section>
+        </div>
+        <section class="cartao movimentacoes" aria-labelledby="titulo-ultimas">
+          <header>
+            <h3 id="titulo-ultimas"><mat-icon>history</mat-icon>Últimas movimentações</h3>
+            <a routerLink="/movimentacoes">Ver todas <mat-icon>arrow_forward</mat-icon></a>
+          </header>
+          @switch (estadoHistorico()) {
+            @case ('carregando') {
+              <p role="status">Carregando movimentações...</p>
+            }
+            @case ('erro') {
+              <p role="alert" class="erro">
+                Não foi possível carregar as movimentações.
+                <a routerLink="/movimentacoes">Abrir histórico</a>
+              </p>
+            }
+            @case ('pronto') {
+              @if (ultimas().length === 0) {
+                <p class="vazio">Nenhuma movimentação no mês selecionado.</p>
+              } @else {
+                <div class="tabela">
+                  <table>
+                    <caption class="sr-only">
+                      Quatro movimentações mais recentes no mês selecionado
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Data</th>
+                        <th scope="col">Descrição</th>
+                        <th scope="col">Categoria</th>
+                        <th scope="col">Tipo</th>
+                        <th scope="col">Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (mov of ultimas(); track mov.id) {
+                        <tr>
+                          <td>{{ formatarData(mov.data) }}</td>
+                          <td>
+                            {{ mov.descricao }}
+                            @if (mov.estornada) {
+                              <small> · Estornada</small>
+                            }
+                          </td>
+                          <td>
+                            <span
+                              class="categoria-tag"
+                              [class.saida]="info[mov.tipo].sentido === 'saida'"
+                              >{{ mov.categoriaNome ?? 'Sem categoria' }}</span
+                            >
+                          </td>
+                          <td>
+                            <span
+                              class="tipo-tag"
+                              [class.saida]="info[mov.tipo].sentido === 'saida'"
+                              >{{ info[mov.tipo].rotulo }}</span
+                            >
+                          </td>
+                          <td class="valor" [class.saida]="info[mov.tipo].sentido === 'saida'">
+                            {{ info[mov.tipo].sentido === 'entrada' ? '+' : '−' }}
+                            {{ mov.valor | moeda }}
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            }
+          }
+        </section>
+      }
+    }
+  }
+}

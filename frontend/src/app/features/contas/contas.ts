@@ -1,5 +1,21 @@
-import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
-import { FormGroupDirective, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatIconModule } from '@angular/material/icon';
+import { ErrorStateMatcher } from '@angular/material/core';
+import {
+  FormGroupDirective,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -9,10 +25,21 @@ import { tratarErroDeEnvio } from '../../shared/forms/erros-do-servidor';
 import { MoedaPipe } from '../../shared/pipes/moeda-pipe';
 import { Conta } from './conta.models';
 import { ContasService } from './contas.service';
+import { bancoDoNome, filtrarBancos } from './catalogo-bancos';
+import { LogoBanco } from './logo-banco';
 
 @Component({
   selector: 'app-contas',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MoedaPipe],
+  imports: [
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MoedaPipe,
+    MatAutocompleteModule,
+    MatIconModule,
+    LogoBanco,
+  ],
   templateUrl: './contas.html',
   styleUrl: './contas.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,6 +57,15 @@ export class Contas {
     nome: ['', [Validators.required, Validators.maxLength(100)]],
   });
   protected readonly enviando = signal(false);
+  protected readonly nomeDigitado = toSignal(this.form.controls.nome.valueChanges, {
+    initialValue: '',
+  });
+  protected readonly sugestoes = computed(() => filtrarBancos(this.nomeDigitado()));
+  protected readonly bancoSelecionado = computed(() => bancoDoNome(this.nomeDigitado()));
+  protected readonly errosAposEnvio: ErrorStateMatcher = {
+    isErrorState: (controle, formulario) =>
+      !!(controle?.invalid && (formulario?.submitted || controle.hasError('servidor'))),
+  };
   protected readonly erro = signal<string | null>(null);
   protected readonly sucesso = signal<string | null>(null);
 

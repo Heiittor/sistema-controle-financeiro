@@ -1,59 +1,104 @@
-# Frontend
+﻿# Frontend — Sistema de Controle Financeiro
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.3.
+Interface Angular para cadastro, autenticação e operações financeiras pessoais.
+Os saldos, a autorização e os cálculos financeiros são responsabilidade da API.
 
-## Development server
+## Pré-requisitos
 
-To start a local development server, run:
+- Node compatível com `^22.22.3 || ^24.15.0 || >=26.0.0`. Na linha 24, use pelo menos `24.15.0`.
+- npm (o `package.json` declara `11.19.0`). Use o lockfile existente para instalar as dependências.
+- API em execução. Consulte o [README da raiz](../README.md) para preparar o backend e o PostgreSQL com Docker.
 
-```bash
-ng serve
+A IDE pode priorizar seu runtime interno. Confira `node --version` no terminal usado para rodar o Angular.
+No Windows, se a instalação compatível estiver em `C:\Program Files\nodejs`, selecione-a para a sessão atual:
+
+```powershell
+$env:PATH = 'C:\Program Files\nodejs;' + $env:PATH
+node --version
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Executar localmente
 
-## Code scaffolding
+Na pasta `frontend`:
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
+```sh
+npm ci
+npm start
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Abra `http://localhost:4200`. A API local usa `http://localhost:8080` e publica o contrato em `/v3/api-docs` e o Swagger em `/swagger-ui/index.html`.
+Cadastre um usuário pela tela de cadastro, entre e crie contas e categorias para registrar movimentações.
 
-```bash
-ng generate --help
+As URLs da API ficam em `src/environments/environment.development.ts` e `src/environments/environment.ts`.
+A configuração de produção ainda usa localhost e precisa ser ajustada ao destino antes de publicar.
+Não coloque segredos nesses arquivos: eles são incluídos no JavaScript entregue ao navegador.
+O backend deve permitir a origem do frontend no CORS; a configuração local já contempla a porta 4200.
+
+## Funcionalidades e limites atuais
+
+| Área | Estado |
+|---|---|
+| Cadastro, login e logout | Implementados, com tratamento de sessão expirada e limite de tentativas |
+| Contas e categorias | Listagem, criação e filtro de categorias por tipo |
+| Movimentações | Receitas, despesas, histórico por conta e período, paginação, edição de descrição/categoria e estorno |
+| Transferências | Uma operação na API, com atualização posterior dos saldos pela API |
+| Navegação | Sidebar recolhível no desktop, menu móvel, título por rota e atalho para o conteúdo |
+| Dashboard | Indicadores B3, série dos últimos seis meses, despesas por categoria, filtro mensal e alternativas textuais dos gráficos |
+| Orçamentos | Placeholder; depende da implementação backend B4 |
+| Resumo por conta | Disponível no backend, ainda sem tela própria |
+
+O [contrato B3](docs/DASHBOARD_B3_PROPOSTA.md) foi implementado e integrado pelo PR #20.
+Execute a versão atual do backend para disponibilizar os endpoints do Dashboard.
+Os gráficos usam Chart.js, carregado junto da rota; as instâncias são destruídas ao trocar dados ou sair da tela.
+
+## Sessão e segurança
+
+A sessão armazena apenas token e vencimento em `sessionStorage`, para sobreviver à atualização da página.
+Esse armazenamento é acessível ao JavaScript e não protege contra XSS. Não registre tokens ou senhas em logs.
+Não há refresh token: após expiração ou `401` de uma rota protegida, o usuário precisa entrar novamente.
+O `401` do login permanece um erro de credenciais. O `429` respeita `Retry-After` sem retentativas automáticas.
+O guard orienta a navegação; a autorização real é aplicada pelo backend a cada requisição.
+
+## Valores e datas
+
+O frontend só envia um valor quando sua serialização JSON preserva o decimal digitado.
+Valores que perderiam centavos ao converter para `number` são bloqueados com mensagem no formulário.
+Não há cálculo local de saldos, resumo consolidado ou consumo de orçamento.
+Datas de negócio usam `AAAA-MM-DD`; o mês padrão segue `America/Sao_Paulo`.
+Depois de uma mutação, as listas são consultadas novamente na API.
+
+## Testes e build
+
+Na pasta `frontend`:
+
+```sh
+npm test -- --no-watch
+npm run build
 ```
 
-## Building
+Os testes usam Vitest, jsdom e `HttpTestingController`. Para executar somente uma área:
 
-To build the project run:
-
-```bash
-ng build
+```sh
+npm test -- --no-watch --include=src/app/features/categorias/categorias.spec.ts
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+O build de produção é gerado em `dist/frontend`. A CI executa instalação pelo lockfile, testes e build do frontend, além da suíte backend.
+Ainda não há suíte E2E nem ESLint configurado. Testes em jsdom não comprovam layout, contraste ou integração real no navegador.
 
-## Running unit tests
+## Conferência manual antes da entrega
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+- Verificar menu aberto/recolhido em desktop e menu sobreposto em celular (por exemplo, 1440, 900 e 360 px), sem transbordamento horizontal.
+- Navegar com Tab, usar “Pular para o conteúdo”, abrir/fechar menu e diálogos, verificar foco e leitura dos rótulos.
+- Confirmar cadastro, login inválido, expiração, logout e `429`/`Retry-After` com a API real em ambiente de teste.
+- Criar contas/categorias, registrar receita/despesa, editar, estornar e transferir; confirmar a atualização a partir da API.
+- Conferir carregamento, erro, lista vazia, filtros e paginação, inclusive com respostas lentas.
+- Conferir ícones e fontes, que são carregados do Google Fonts, e possíveis erros no console.
 
-```bash
-ng test
-```
+## Organização
 
-## Running end-to-end tests
+- `core`: API, autenticação, interceptors e sessão.
+- `layout`: shell e navegação.
+- `features`: componentes e serviços por funcionalidade.
+- `shared`: formulários, datas, moeda, estilos e componentes comuns.
 
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+O projeto usa componentes standalone, Signals, `OnPush` e Reactive Forms. Preserve os contratos reais da API e o fluxo de trabalho documentado: alterações backend exigem aprovação prévia.

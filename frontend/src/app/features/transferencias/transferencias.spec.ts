@@ -148,6 +148,15 @@ describe('Transferencias', () => {
     expect(texto()).toContain('Use apenas números');
   });
 
+  it('bloqueia valor que perderia centavos e explica o motivo', () => {
+    responderContas(CONTAS);
+    preencherValido('999999999999999,99');
+    enviar();
+
+    backend.expectNone((r) => r.method === 'POST');
+    expect(texto()).toContain('Este valor não pode ser enviado sem perda de centavos.');
+  });
+
   it('transfere com UMA requisição, mostra o que a API devolveu e recarrega os saldos pela API', () => {
     responderContas(CONTAS);
 

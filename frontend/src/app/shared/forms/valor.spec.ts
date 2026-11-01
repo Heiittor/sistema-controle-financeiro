@@ -3,6 +3,24 @@ import { describe, expect, it } from 'vitest';
 import { converterValor, validarValor } from './valor';
 
 describe('converterValor', () => {
+  it('recusa valores cujo JSON perderia centavos', () => {
+    for (const texto of ['999999999999999.99', '999999999999999,99', '100000000000000.01']) {
+      expect(converterValor(texto)).toBeNull();
+      expect(validarValor(new FormControl(texto))).toEqual({ precisao: true });
+    }
+  });
+
+  it('preserva valores representáveis no JSON, inclusive zeros opcionais', () => {
+    for (const [texto, json] of [
+      ['00010,50', '10.5'],
+      ['0,29', '0.29'],
+      ['9999999999999.99', '9999999999999.99'],
+      ['999999999999999', '999999999999999'],
+    ]) {
+      expect(JSON.stringify(converterValor(texto))).toBe(json);
+    }
+  });
+
   it('aceita inteiro, vírgula e ponto', () => {
     expect(converterValor('10')).toBe(10);
     expect(converterValor('10,5')).toBe(10.5);

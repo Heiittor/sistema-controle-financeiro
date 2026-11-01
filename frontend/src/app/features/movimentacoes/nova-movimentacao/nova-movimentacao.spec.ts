@@ -120,6 +120,15 @@ describe('NovaMovimentacao', () => {
     backend.expectNone((r) => r.method === 'POST');
   });
 
+  it('bloqueia valor que perderia centavos e explica o motivo', () => {
+    responderCategorias('DESPESA', DESPESAS);
+    preencherValido('999999999999999,99');
+    enviar();
+
+    backend.expectNone((r) => r.method === 'POST');
+    expect(texto()).toContain('Este valor não pode ser enviado sem perda de centavos.');
+  });
+
   it('registra a despesa enviando o valor convertido e fecha informando conta e data', () => {
     responderCategorias('DESPESA', DESPESAS);
 
