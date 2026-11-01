@@ -37,6 +37,9 @@ export class Categorias {
   protected readonly erro = signal<string | null>(null);
   protected readonly sucesso = signal<string | null>(null);
 
+  // Só a consulta mais recente pode atualizar a lista e seu estado.
+  private consulta = 0;
+
   constructor() {
     this.carregar();
   }
@@ -48,15 +51,22 @@ export class Categorias {
   }
 
   protected carregar(mostrarCarregando = true): void {
+    const minha = ++this.consulta;
     if (mostrarCarregando) {
       this.estado.set('carregando');
     }
     this.api.listar(this.filtro() ?? undefined).subscribe({
       next: (categorias) => {
+        if (minha !== this.consulta) {
+          return;
+        }
         this.categorias.set(categorias);
         this.estado.set('pronto');
       },
       error: (erro: unknown) => {
+        if (minha !== this.consulta) {
+          return;
+        }
         this.erroLista.set(mensagemDeErro(erro));
         this.estado.set('erro');
       },

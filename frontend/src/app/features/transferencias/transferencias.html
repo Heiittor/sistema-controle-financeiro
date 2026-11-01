@@ -93,6 +93,8 @@
             <mat-error>Use apenas números, com vírgula ou ponto e até 2 casas decimais.</mat-error>
           } @else if (form.controls.valor.hasError('positivo')) {
             <mat-error>O valor deve ser maior que zero.</mat-error>
+          } @else if (form.controls.valor.hasError('precisao')) {
+            <mat-error>Este valor não pode ser enviado sem perda de centavos. Informe um valor menor.</mat-error>
           } @else if (form.controls.valor.hasError('servidor')) {
             <mat-error>{{ form.controls.valor.getError('servidor') }}</mat-error>
           }
