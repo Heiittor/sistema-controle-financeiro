@@ -106,4 +106,18 @@ describe('Cadastro', () => {
 
     expect(tela().querySelector('.erro')!.textContent).toContain('O e-mail é inválido.');
   });
+
+  it('alterna a visibilidade sem alterar a senha nem enviar o formulário', () => {
+    digitar('senha', 'senha12345');
+    const senha = tela().querySelector<HTMLInputElement>('#cadastro-senha')!;
+    expect(senha.type).toBe('password');
+    tela().querySelector<HTMLButtonElement>('button[aria-label="Mostrar senha"]')!.click();
+    fixture.detectChanges();
+    expect(senha.type).toBe('text');
+    expect(senha.value).toBe('senha12345');
+    tela().querySelector<HTMLButtonElement>('button[aria-label="Ocultar senha"]')!.click();
+    fixture.detectChanges();
+    expect(senha.type).toBe('password');
+    backend.expectNone(() => true);
+  });
 });

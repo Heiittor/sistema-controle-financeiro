@@ -4,6 +4,8 @@
 // Learn more about theming and how to use it for your application's
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
+@use './app/features/contas/autocomplete-tema' as bancos;
+@include bancos.tema();
 
 html {
   height: 100%;
@@ -36,6 +38,13 @@ body {
 // Tokens próprios: só o que o Material não oferece.
 // Todo o resto do visual (cores de marca, erro, superfícies, cantos) vem de --mat-sys-*.
 :root {
+  --app-fundo: #f5f6fa;
+  --app-superficie: #fff;
+  --app-borda: #e3e7ef;
+  --app-azul: #3659c9;
+  --app-azul-profundo: #203f9c;
+  --app-texto-secundario: #586174;
+  --app-sombra: 0 0.25rem 1.5rem rgb(25 42 80 / 6%);
   // Cores financeiras. Contraste sobre branco: ambas 6,5:1 (mínimo WCAG para texto: 4,5:1).
   // Regra: a cor nunca carrega o significado sozinha; sempre junto de sinal ou texto.
   --app-receita: #146c3c;

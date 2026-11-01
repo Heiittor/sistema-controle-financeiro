@@ -79,14 +79,18 @@ describe('Login', () => {
     digitar('senha', 'errada');
     enviar();
 
-    backend.expectOne(`${API}/auth/login`).flush(
-      { status: 401, mensagem: 'E-mail ou senha inválidos.', timestamp: 'x', campos: [] },
-      { status: 401, statusText: 'Unauthorized' },
-    );
+    backend
+      .expectOne(`${API}/auth/login`)
+      .flush(
+        { status: 401, mensagem: 'E-mail ou senha inválidos.', timestamp: 'x', campos: [] },
+        { status: 401, statusText: 'Unauthorized' },
+      );
     fixture.detectChanges();
 
     expect(tela().textContent).toContain('E-mail ou senha inválidos.');
-    expect(tela().querySelector<HTMLInputElement>('input[formControlName="email"]')!.value).toBe('ana@teste.com');
+    expect(tela().querySelector<HTMLInputElement>('input[formControlName="email"]')!.value).toBe(
+      'ana@teste.com',
+    );
     expect(sessao.autenticado()).toBe(false);
     expect(navegar).not.toHaveBeenCalled();
   });
@@ -97,10 +101,12 @@ describe('Login', () => {
     digitar('senha', 'senha12345');
     enviar();
 
-    backend.expectOne(`${API}/auth/login`).flush(
-      { status: 429, mensagem: 'Muitas tentativas de login.', timestamp: 'x', campos: [] },
-      { status: 429, statusText: 'Too Many Requests', headers: { 'Retry-After': '120' } },
-    );
+    backend
+      .expectOne(`${API}/auth/login`)
+      .flush(
+        { status: 429, mensagem: 'Muitas tentativas de login.', timestamp: 'x', campos: [] },
+        { status: 429, statusText: 'Too Many Requests', headers: { 'Retry-After': '120' } },
+      );
     fixture.detectChanges();
 
     const botao = tela().querySelector<HTMLButtonElement>('button[type="submit"]')!;
@@ -133,5 +139,19 @@ describe('Login', () => {
 
   it('oferece o caminho para o cadastro', () => {
     expect(tela().querySelector('a[href="/cadastro"]')).not.toBeNull();
+  });
+
+  it('alterna a visibilidade sem enviar ou alterar a senha digitada', () => {
+    digitar('senha', 'senha12345');
+    const senha = tela().querySelector<HTMLInputElement>('#login-senha')!;
+    expect(senha.type).toBe('password');
+    tela().querySelector<HTMLButtonElement>('button[aria-label="Mostrar senha"]')!.click();
+    fixture.detectChanges();
+    expect(senha.type).toBe('text');
+    expect(senha.value).toBe('senha12345');
+    tela().querySelector<HTMLButtonElement>('button[aria-label="Ocultar senha"]')!.click();
+    fixture.detectChanges();
+    expect(senha.type).toBe('password');
+    backend.expectNone(() => true);
   });
 });

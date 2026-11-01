@@ -32,6 +32,7 @@ export class Login {
   });
 
   protected readonly enviando = signal(false);
+  protected readonly senhaVisivel = signal(false);
   protected readonly erro = signal<string | null>(null);
   // Segundos restantes de bloqueio (429). null = sem bloqueio.
   protected readonly espera = signal<number | null>(null);

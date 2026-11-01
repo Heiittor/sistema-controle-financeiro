@@ -21,11 +21,34 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./layout/shell/shell').then((m) => m.Shell),
     children: [
-      { path: '', pathMatch: 'full', title: 'Dashboard', loadComponent: emConstrucao },
-      { path: 'contas', title: 'Contas', loadComponent: () => import('./features/contas/contas').then((m) => m.Contas),},
-      { path: 'movimentacoes', title: 'Movimentações', loadComponent: () => import('./features/movimentacoes/movimentacoes').then((m) => m.Movimentacoes), },
-      { path: 'categorias', title: 'Categorias', loadComponent: () => import('./features/categorias/categorias').then((m) => m.Categorias), },
-      { path: 'transferencias', title: 'Transferências', loadComponent: () => import('./features/transferencias/transferencias').then((m) => m.Transferencias), },
+      {
+        path: '',
+        pathMatch: 'full',
+        title: 'Dashboard',
+        loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+      },
+      {
+        path: 'contas',
+        title: 'Contas',
+        loadComponent: () => import('./features/contas/contas').then((m) => m.Contas),
+      },
+      {
+        path: 'movimentacoes',
+        title: 'Movimentações',
+        loadComponent: () =>
+          import('./features/movimentacoes/movimentacoes').then((m) => m.Movimentacoes),
+      },
+      {
+        path: 'categorias',
+        title: 'Categorias',
+        loadComponent: () => import('./features/categorias/categorias').then((m) => m.Categorias),
+      },
+      {
+        path: 'transferencias',
+        title: 'Transferências',
+        loadComponent: () =>
+          import('./features/transferencias/transferencias').then((m) => m.Transferencias),
+      },
       { path: 'orcamentos', title: 'Orçamentos', loadComponent: emConstrucao },
     ],
   },

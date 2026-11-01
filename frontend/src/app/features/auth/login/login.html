@@ -1,45 +1,169 @@
-<main class="pagina-auth">
-  <section class="cartao" aria-labelledby="titulo-login">
-    <h1 id="titulo-login">Entrar</h1>
-
-    @if (cadastro() === 'ok') {
-      <p class="aviso sucesso" role="status">Conta criada. Entre para continuar.</p>
-    }
-    @if (sessao.sessaoExpirada()) {
-      <p class="aviso" role="status">Sua sessão expirou. Entre novamente.</p>
-    }
-
-    <form [formGroup]="form" (ngSubmit)="entrar()" novalidate>
-      <mat-form-field appearance="outline">
-        <mat-label>E-mail</mat-label>
-        <input matInput type="email" formControlName="email" autocomplete="username" />
-        @if (form.controls.email.hasError('required')) {
-          <mat-error>Informe o e-mail.</mat-error>
-        } @else if (form.controls.email.hasError('email')) {
-          <mat-error>Informe um e-mail válido.</mat-error>
-        }
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Senha</mat-label>
-        <input matInput type="password" formControlName="senha" autocomplete="current-password" />
-        @if (form.controls.senha.hasError('required')) {
-          <mat-error>Informe a senha.</mat-error>
-        }
-      </mat-form-field>
-
-      @if (erro(); as mensagem) {
-        <p class="erro" role="alert">{{ mensagem }}</p>
+﻿<main class="pagina-auth">
+  <aside class="apresentacao" aria-label="Controle Financeiro">
+    <svg class="fundo-azul" viewBox="0 0 360 880" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="azul-login" x1="0" y1="1" x2="1" y2="0">
+          <stop stop-color="#002270" />
+          <stop offset="1" stop-color="#0059e7" />
+        </linearGradient>
+      </defs>
+      <path d="M0 0H360C338 62 346 152 348 220V880H0Z" fill="url(#azul-login)" />
+      <path d="M0 799C103 819 159 680 348 649V880H0Z" fill="#0061ee" opacity=".46" />
+      <path d="M0 853C130 924 190 755 348 710V880H0Z" fill="#003cae" opacity=".75" />
+    </svg>
+    <div class="marca">
+      <svg viewBox="0 0 54 58" aria-hidden="true">
+        <g fill="currentColor">
+          <rect x="2" y="40" width="12" height="16" rx="1" />
+          <rect x="19" y="29" width="12" height="27" rx="1" />
+          <rect x="36" y="19" width="12" height="37" rx="1" />
+        </g>
+        <path
+          d="m3 31 15-12 9 4L45 5m-10 0h10v10"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="4"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <span>CONTROLE<br />FINANCEIRO</span>
+    </div>
+    <div class="chamada">
+      <h2>Organize sua<br />vida financeira</h2>
+      <p>Controle contas, acompanhe movimentações e planeje seus objetivos.</p>
+    </div>
+    <svg class="ilustracao" viewBox="0 0 300 260" aria-hidden="true">
+      <defs>
+        <linearGradient id="placa-login" x1="0" y1="0" x2="1" y2="1">
+          <stop stop-color="#2869ed" />
+          <stop offset="1" stop-color="#0532a3" />
+        </linearGradient>
+        <linearGradient id="barra-login" x1="0" y1="0" x2="1" y2="1">
+          <stop stop-color="#bbdfff" />
+          <stop offset=".5" stop-color="#62a6ff" />
+          <stop offset="1" stop-color="#225bd1" />
+        </linearGradient>
+        <linearGradient id="topo-login">
+          <stop stop-color="#d9eeff" />
+          <stop offset="1" stop-color="#84beff" />
+        </linearGradient>
+      </defs>
+      <path d="M20 66 245 5Q257 1 269 15L282 28 42 246 20 232Z" fill="#2169ed" />
+      <path
+        d="M34 73 265 13Q284 9 285 31V174Q286 193 268 200L43 258Q24 260 22 239L17 101Q16 81 34 73Z"
+        fill="url(#placa-login)"
+        stroke="#3775ee"
+        stroke-width="1.5"
+      />
+      <path d="m44 98 68-18v13L44 111Zm149-39 72-19v8l-72 20Z" fill="#397af0" opacity=".6" />
+      <g stroke="#649cff" stroke-width=".7">
+        <path d="m52 180 20-6 8 5v33l-20 6-8-6Z" fill="url(#barra-login)" />
+        <path d="m52 180 20-6 8 5-20 6Z" fill="url(#topo-login)" />
+        <path d="m83 154 20-6 8 5v49l-20 6-8-6Z" fill="url(#barra-login)" />
+        <path d="m83 154 20-6 8 5-20 6Z" fill="url(#topo-login)" />
+        <path d="m115 132 20-6 8 5v60l-20 6-8-6Z" fill="url(#barra-login)" />
+        <path d="m115 132 20-6 8 5-20 6Z" fill="url(#topo-login)" />
+        <path d="m148 104 20-6 8 5v77l-20 6-8-6Z" fill="url(#barra-login)" />
+        <path d="m148 104 20-6 8 5-20 6Z" fill="url(#topo-login)" />
+      </g>
+      <path
+        d="M230 83C202 87 193 113 201 138S231 164 248 150L230 121Z"
+        fill="url(#barra-login)"
+        stroke="#75b2ff"
+        stroke-width="1.5"
+      />
+      <path d="M236 81V115L264 105C263 89 252 77 236 81Z" fill="url(#topo-login)" />
+      <path d="m238 122 27-10c3 15-2 27-11 35Z" fill="#3b86f5" />
+    </svg>
+  </aside>
+  <div class="lado-formulario">
+    <section class="cartao" aria-labelledby="titulo-login">
+      <div class="icone-usuario" aria-hidden="true">
+        <svg viewBox="0 0 48 48">
+          <circle cx="24" cy="14" r="8" />
+          <path d="M9 40v-4c0-14 30-14 30 0v4" />
+        </svg>
+      </div>
+      <h1 id="titulo-login">Entrar</h1>
+      <p class="subtitulo">Acesse sua conta para continuar.</p>
+      @if (cadastro() === 'ok') {
+        <p class="aviso sucesso" role="status">Conta criada. Entre para continuar.</p>
       }
-      @if (espera() !== null) {
-        <p class="aviso" role="status">Tente novamente em {{ esperaFormatada() }}.</p>
+      @if (sessao.sessaoExpirada()) {
+        <p class="aviso" role="status">Sua sessão expirou. Entre novamente.</p>
       }
-
-      <button mat-flat-button type="submit" [disabled]="enviando() || espera() !== null">
-        {{ enviando() ? 'Entrando...' : 'Entrar' }}
-      </button>
-    </form>
-
-    <p class="alternativa">Não tem conta? <a routerLink="/cadastro">Criar conta</a></p>
-  </section>
+      <form [formGroup]="form" (ngSubmit)="entrar()" novalidate>
+        <div class="campo">
+          <label for="login-email">E-mail <span aria-hidden="true">*</span></label>
+          <mat-form-field appearance="outline">
+            <svg matIconPrefix class="icone-campo" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="m3 6 9 7 9-7" />
+            </svg>
+            <input
+              matInput
+              id="login-email"
+              type="email"
+              formControlName="email"
+              autocomplete="username"
+              placeholder="Digite seu e-mail"
+              required
+            />
+            @if (form.controls.email.hasError('required')) {
+              <mat-error>Informe o e-mail.</mat-error>
+            } @else if (form.controls.email.hasError('email')) {
+              <mat-error>Informe um e-mail válido.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+        <div class="campo">
+          <label for="login-senha">Senha <span aria-hidden="true">*</span></label>
+          <mat-form-field appearance="outline">
+            <svg matIconPrefix class="icone-campo" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="10" width="18" height="12" rx="2" />
+              <path d="M7 10V6a5 5 0 0 1 10 0v4m-5 5v3" />
+            </svg>
+            <input
+              matInput
+              id="login-senha"
+              [type]="senhaVisivel() ? 'text' : 'password'"
+              formControlName="senha"
+              autocomplete="current-password"
+              placeholder="Digite sua senha"
+              required
+            />
+            <button
+              matIconSuffix
+              class="visibilidade"
+              type="button"
+              [attr.aria-label]="senhaVisivel() ? 'Ocultar senha' : 'Mostrar senha'"
+              [attr.aria-pressed]="senhaVisivel()"
+              (click)="senhaVisivel.set(!senhaVisivel())"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 9c5-6 13-5 18 3-2 3-4 5-7 6M6 6l15 15M3 3l3 3m3 11c-3-1-5-3-7-5l2-3" />
+                <path d="M10 10a3 3 0 0 0 4 4m-2-5a3 3 0 0 1 3 3" />
+              </svg>
+            </button>
+            @if (form.controls.senha.hasError('required')) {
+              <mat-error>Informe a senha.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+        @if (erro(); as mensagem) {
+          <p class="erro" role="alert">{{ mensagem }}</p>
+        }
+        @if (espera() !== null) {
+          <p class="aviso" role="status">Tente novamente em {{ esperaFormatada() }}.</p>
+        }
+        <button class="entrar" type="submit" [disabled]="enviando() || espera() !== null">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M14 4h3a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4h-3M3 12h12m-5-5 5 5-5 5M4 4h1" />
+          </svg>
+          {{ enviando() ? 'Entrando...' : 'Entrar' }}
+        </button>
+      </form>
+      <p class="alternativa">Não tem conta? <a routerLink="/cadastro">Criar conta</a></p>
+    </section>
+  </div>
 </main>

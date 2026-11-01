@@ -1,5 +1,5 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,7 +11,14 @@ import { ITENS_MENU } from '../nav-itens';
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatSidenavModule, MatIconModule, MatButtonModule],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    MatSidenavModule,
+    MatIconModule,
+    MatButtonModule,
+  ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -21,6 +28,7 @@ export class Shell {
   private readonly auth = inject(AuthService);
 
   protected readonly itens = ITENS_MENU;
+  protected readonly recolhida = signal(false);
 
   // Abaixo de 900 px a sidebar vira um menu sobreposto, aberto pelo botão do topo.
   protected readonly compacto = toSignal(
