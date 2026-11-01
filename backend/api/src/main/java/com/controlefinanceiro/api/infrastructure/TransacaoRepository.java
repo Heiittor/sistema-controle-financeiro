@@ -61,6 +61,45 @@ public interface TransacaoRepository extends Repository<Transacao, Long> {
                                                @Param("inicio") LocalDate inicio,
                                                @Param("fim") LocalDate fim);
 
+    // Dashboard: consolida apenas dados do dono, mantendo a semântica do resumo por conta.
+    @Query("""
+            select t.categoria.id as categoriaId, t.categoria.nome as categoriaNome,
+                   t.tipo as tipo, sum(t.valor.valor) as total
+            from Transacao t
+            where t.conta.usuario.id = :usuarioId
+              and t.data between :inicio and :fim
+              and t.tipo in (com.controlefinanceiro.api.domain.TipoTransacao.RECEITA,
+                             com.controlefinanceiro.api.domain.TipoTransacao.DESPESA)
+              and not exists (select 1 from Transacao e where e.estornoDe.id = t.id)
+            group by t.categoria.id, t.categoria.nome, t.tipo
+            order by t.categoria.nome, t.categoria.id
+            """)
+    List<TotalPorCategoria> totaisDoUsuarioPorCategoria(@Param("usuarioId") Long usuarioId,
+                                                      @Param("inicio") LocalDate inicio,
+                                                      @Param("fim") LocalDate fim);
+
+    @Query("""
+            select year(t.data) as ano, month(t.data) as mes, t.tipo as tipo, sum(t.valor.valor) as total
+            from Transacao t
+            where t.conta.usuario.id = :usuarioId
+              and t.data between :inicio and :fim
+              and t.tipo in (com.controlefinanceiro.api.domain.TipoTransacao.RECEITA,
+                             com.controlefinanceiro.api.domain.TipoTransacao.DESPESA)
+              and not exists (select 1 from Transacao e where e.estornoDe.id = t.id)
+            group by year(t.data), month(t.data), t.tipo
+            order by year(t.data), month(t.data)
+            """)
+    List<TotalMensal> totaisMensaisDoUsuario(@Param("usuarioId") Long usuarioId,
+                                            @Param("inicio") LocalDate inicio,
+                                            @Param("fim") LocalDate fim);
+
+    interface TotalMensal {
+        Integer getAno();
+        Integer getMes();
+        TipoTransacao getTipo();
+        BigDecimal getTotal();
+    }
+
     // Projeção: o Spring preenche só estes quatro campos.
     interface TotalPorCategoria {
         Long getCategoriaId();

@@ -2,12 +2,19 @@ package com.controlefinanceiro.api.infrastructure;
 
 import com.controlefinanceiro.api.domain.Conta;
 import org.springframework.data.repository.Repository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 // IMPORTANTE: sem findById nem findAll de propósito, para não vazar contas de outros usuários.
 public interface ContaRepository extends Repository<Conta, Long> {
+    @Query(
+            "select coalesce(sum(c.saldo.valor), 0) from Conta c where c.usuario.id = :usuarioId")
+    BigDecimal saldoTotalDoUsuario(@Param("usuarioId") Long usuarioId);
+
 
     // Serve para inserir e para atualizar (o saldo novo é gravado por aqui).
     Conta save(Conta conta);
