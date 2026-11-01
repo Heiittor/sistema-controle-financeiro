@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.dao.DataIntegrityViolationException;
 import com.controlefinanceiro.api.domain.exception.TentativasExcedidasException;
@@ -26,6 +27,14 @@ import java.util.List;
 // IMPORTANTE: observa todos os Controllers. Erro tratado aqui, em um lugar só.
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErroResponse> tratarParametroAusente(
+            MissingServletRequestParameterException ex) {
+        return ResponseEntity.badRequest().body(ErroResponse.de(
+                HttpStatus.BAD_REQUEST.value(),
+                "Parâmetro obrigatório ausente: " + ex.getParameterName() + "."));
+    }
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 

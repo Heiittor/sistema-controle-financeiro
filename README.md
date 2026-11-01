@@ -33,7 +33,7 @@ Arquitetura em camadas com regra de dependência apontando para dentro: o domín
 
 ## Testes e integração contínua
 
-- **111 testes**, entre unitários e de integração com PostgreSQL real via Testcontainers.
+- **125 testes**, entre unitários e de integração com PostgreSQL real via Testcontainers.
 - Cobrem segurança, autorização entre usuários, transferências, estornos, auditoria e atomicidade.
 - GitHub Actions executa a suíte a cada push e Pull Request.
 
@@ -72,6 +72,29 @@ cd backend/api
 | POST | `/contas/{id}/transacoes/{id}/estorno` | Autenticado |
 | GET | `/contas/{id}/resumo` | Autenticado |
 | POST | `/transferencias` | Autenticado |
+| GET | `/dashboard/resumo?inicio&fim` | Autenticado |
+| GET | `/dashboard/serie-mensal?inicio&fim` | Autenticado |
+
+## Dashboard consolidado (B3)
+
+Os dois endpoints exigem `inicio` e `fim` no formato `AAAA-MM-DD`, com intervalo
+inclusivo de até 24 meses civis. Parâmetros ausentes/malformados retornam 400;
+período invertido ou acima do limite retorna 422. Todas as consultas usam o dono do JWT.
+
+- `/dashboard/resumo`: devolve `inicio`, `fim`, `saldoTotal`, `totalReceitas`,
+  `totalDespesas`, `saldoDoPeriodo` e `porCategoria` (somente despesas).
+  `saldoTotal` representa os saldos **atuais** das contas, independente do período.
+- `/dashboard/serie-mensal`: devolve itens `{mes, receitas, despesas}`, em ordem
+  crescente, com meses sem movimento preenchidos com zero. As datas exatas são
+  respeitadas, inclusive meses parciais nas extremidades.
+- Transferências, estornos e originais já estornadas não entram nos totais do período
+  nem na série. O estorno exclui a original mesmo quando realizado fora do período consultado.
+- As agregações usam `BigDecimal` e consultas ao banco; nenhum cálculo consolidado
+  fica a cargo do frontend. Não há nova tabela ou migration.
+
+Exemplo: `GET /dashboard/serie-mensal?inicio=2026-05-01&fim=2026-10-31`.
+O contrato completo, schemas e respostas de erro estão na OpenAPI gerada.
+Teste direcionado: `./mvnw -Dtest=DashboardTest test`, em `backend/api`, com Docker disponível.
 
 ## Limitações e próximos passos
 
