@@ -33,7 +33,7 @@ Arquitetura em camadas com regra de dependência apontando para dentro: o domín
 
 ## Testes e integração contínua
 
-- **125 testes**, entre unitários e de integração com PostgreSQL real via Testcontainers.
+- **148 testes**, entre unitários e de integração com PostgreSQL real via Testcontainers.
 - Cobrem segurança, autorização entre usuários, transferências, estornos, auditoria e atomicidade.
 - GitHub Actions executa a suíte a cada push e Pull Request.
 
@@ -72,8 +72,42 @@ cd backend/api
 | POST | `/contas/{id}/transacoes/{id}/estorno` | Autenticado |
 | GET | `/contas/{id}/resumo` | Autenticado |
 | POST | `/transferencias` | Autenticado |
+| POST/GET | `/orcamentos` | Autenticado |
+| PATCH | `/orcamentos/{id}` | Autenticado |
+| GET | `/transferencias?contaId&page&size` | Autenticado |
 | GET | `/dashboard/resumo?inicio&fim` | Autenticado |
 | GET | `/dashboard/serie-mensal?inicio&fim` | Autenticado |
+
+## Orçamentos mensais (B4)
+
+- POST recebe `{categoriaId, mes:"AAAA-MM", limite}`; uma categoria de despesa
+  do dono e um limite positivo de até duas casas. Duplicidade por dono/categoria/mês: 409.
+- PATCH recebe somente `{limite}`. Categoria e mês permanecem fixos.
+- GET exige `mes=AAAA-MM` e aceita `page` e `size` (10 por padrão, máximo 100;
+  tamanho não positivo usa 20 e página negativa usa zero).
+- Resposta paginada com `resumo` do mês inteiro: `ativos`, `dentroDoPlanejado`,
+  `acimaDoLimite`. Cada linha contém limite, gasto, restante, percentual e situação.
+- Consumo soma despesas elegíveis de todas as contas do dono. Ignora transferências,
+  estornos e originais estornadas, inclusive quando o estorno ocorre fora do mês.
+- Abaixo de 80%: DENTRO_DO_LIMITE; de 80% a 100%: ATENCAO; acima de 100%:
+  ACIMA_DO_LIMITE. Comparação exata antes do percentual arredondado para exibição.
+- Limites não alteram saldos nem geram movimentações. Alterações são auditadas.
+- Flyway V8 cria somente a tabela necessária de orçamentos. Não há endpoint DELETE.
+- Conta/categoria/orçamento de outro dono não é exposto; consulta e edição passam pelo JWT.
+
+## Histórico de transferências
+
+`GET /transferencias` lista uma operação por UUID, com origem e destino (IDs e nomes),
+descrição, valor positivo e data. Inclui somente pares cujas duas contas pertencem ao
+usuário do JWT. `contaId` é opcional e considera entradas e saídas; conta alheia ou
+inexistente retorna o mesmo 404. Não há corte automático de período.
+
+Retorna `PaginaResponse` (`conteudo`, `pagina`, `tamanho`, `totalElementos`,
+`totalPaginas`), ordenado por data e ID da saída decrescentes.
+`page` começa em zero e valores negativos usam zero. `size` padrão é 5, máximo
+100; valores não positivos usam 20, seguindo a normalização da listagem de transações.
+Parâmetros malformados retornam 400. O POST e as regras financeiras permanecem iguais.
+A consulta usa o índice existente do UUID e projeção escalar, sem N+1.
 
 ## Dashboard consolidado (B3)
 
@@ -100,4 +134,6 @@ Teste direcionado: `./mvnw -Dtest=DashboardTest test`, em `backend/api`, com Doc
 
 Sem refresh token ou revogação individual de JWT; rate limit limitado a uma instância; sem roles; transferências restritas a contas do mesmo usuário; imutabilidade da auditoria garantida no código (no banco exigiria permissões ou trigger); algumas dependências transitivas têm CVEs sem correção publicada na versão atual do Spring Boot (monitoradas via Dependabot).
 
-Próximas etapas: frontend na branch `front`.
+O frontend Angular está em [frontend/README.md](frontend/README.md).
+Após integrar alterações das branches de trabalho, execute os testes e a CI
+na versão reunida antes de publicar uma nova entrega.

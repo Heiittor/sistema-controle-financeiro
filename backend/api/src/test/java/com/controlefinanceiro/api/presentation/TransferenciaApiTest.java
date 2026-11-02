@@ -26,6 +26,9 @@ class TransferenciaApiTest extends IntegracaoBase {
     @Autowired
     private JdbcTemplate jdbc;
 
+    @Autowired
+    private jakarta.persistence.EntityManagerFactory entityManagerFactory;
+
     private Sessao ana;
     private Sessao beto;
     private long contaA1;
@@ -140,6 +143,123 @@ class TransferenciaApiTest extends IntegracaoBase {
     }
 
     // ---- apoio ----
+    @Test
+    void deveListarUmaLinhaPorOperacaoComDirecaoNomesEPaginacaoEstavel() throws Exception {
+        String primeira = transferir(ana, contaA1, contaA2, "30.00")
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        String segunda = transferir(ana, contaA2, contaA1, "10.00")
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        String idPrimeira = JsonPath.read(primeira, "$.transferenciaId");
+        String idSegunda = JsonPath.read(segunda, "$.transferenciaId");
+        mockMvc.perform(get("/transferencias").header("Authorization", bearer(ana)).param("size", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElementos").value(2))
+                .andExpect(jsonPath("$.totalPaginas").value(2))
+                .andExpect(jsonPath("$.conteudo.length()").value(1))
+                .andExpect(jsonPath("$.conteudo[0].transferenciaId").value(idSegunda))
+                .andExpect(jsonPath("$.conteudo[0].contaOrigemId").value(contaA2))
+                .andExpect(jsonPath("$.conteudo[0].contaOrigemNome").value("Itaú"))
+                .andExpect(jsonPath("$.conteudo[0].contaDestinoNome").value("Nubank"))
+                .andExpect(jsonPath("$.conteudo[0].valor").value(10));
+        mockMvc.perform(get("/transferencias").header("Authorization", bearer(ana))
+                        .param("page", "1").param("size", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pagina").value(1))
+                .andExpect(jsonPath("$.conteudo[0].transferenciaId").value(idPrimeira));
+        conferirSaldo(contaA1, "80.00");
+        conferirSaldo(contaA2, "20.00");
+        assertEquals(4, contarTransferencias());
+    }
+
+    @Test
+    void filtroDeContaIncluiOsDoisSentidosSemDuplicarEIgnoraOutrasContas() throws Exception {
+        long terceira = criar("/contas", ana, "{\"nome\":\"Reserva\"}");
+        transferir(ana, contaA1, contaA2, "30.00").andExpect(status().isCreated());
+        transferir(ana, contaA2, contaA1, "10.00").andExpect(status().isCreated());
+        transferir(ana, contaA1, terceira, "10.00").andExpect(status().isCreated());
+        mockMvc.perform(get("/transferencias").header("Authorization", bearer(ana))
+                        .param("contaId", String.valueOf(contaA2)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElementos").value(2))
+                .andExpect(jsonPath("$.conteudo[0].contaOrigemId").value(contaA2))
+                .andExpect(jsonPath("$.conteudo[1].contaDestinoId").value(contaA2));
+    }
+
+    @Test
+    void historicoNaoTemCorteDePeriodoENaoIncluiReceitasDespesasOuEstornos() throws Exception {
+        mockMvc.perform(post("/transferencias").header("Authorization", bearer(ana))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo(contaA1, contaA2, "10.00").replace("2026-10-05", "2020-01-01")))
+                .andExpect(status().isCreated());
+        long categoria = criar("/categorias", ana, "{\"nome\":\"Mercado\",\"tipo\":\"DESPESA\"}");
+        long despesa = criar("/contas/" + contaA1 + "/despesas", ana,
+                "{\"categoriaId\":" + categoria + ",\"descricao\":\"Compra\",\"valor\":5,\"data\":\"2026-10-01\"}");
+        mockMvc.perform(post("/contas/{id}/transacoes/{tid}/estorno", contaA1, despesa)
+                        .header("Authorization", bearer(ana))).andExpect(status().isCreated());
+        mockMvc.perform(get("/transferencias").header("Authorization", bearer(ana)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElementos").value(1))
+                .andExpect(jsonPath("$.conteudo[0].data").value("2020-01-01"));
+    }
+
+    @Test
+    void historicoExigeTokenENaoVazaDadosDeOutroUsuario() throws Exception {
+        transferir(ana, contaA1, contaA2, "10.00").andExpect(status().isCreated());
+        mockMvc.perform(get("/transferencias")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/transferencias").header("Authorization", bearer(beto)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElementos").value(0));
+        for (long conta : new long[]{contaDoBeto, Long.MAX_VALUE}) {
+            mockMvc.perform(get("/transferencias").header("Authorization", bearer(ana))
+                            .param("contaId", String.valueOf(conta)))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.mensagem").value("Conta não encontrada."));
+        }
+    }
+
+    @Test
+    void consultaRestringeAsDuasPontasAoDonoMesmoComParInconsistente() throws Exception {
+        transferir(ana, contaA1, contaA2, "10.00").andExpect(status().isCreated());
+        // Defesa adicional: um dado inconsistente no banco não deve abrir acesso cruzado.
+        jdbc.update("update transacoes set conta_id = ? where conta_id = ? and tipo = 'TRANSFERENCIA_ENTRADA'",
+                contaDoBeto, contaA2);
+        for (Sessao sessao : new Sessao[]{ana, beto}) {
+            mockMvc.perform(get("/transferencias").header("Authorization", bearer(sessao)))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.totalElementos").value(0));
+        }
+    }
+
+    @Test
+    void historicoAplicaLimitesDePaginaEValidaTiposDeParametros() throws Exception {
+        mockMvc.perform(get("/transferencias").header("Authorization", bearer(ana))
+                        .param("page", "-1").param("size", "10000"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.pagina").value(0))
+                .andExpect(jsonPath("$.tamanho").value(100));
+        mockMvc.perform(get("/transferencias").header("Authorization", bearer(ana)).param("size", "0"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.tamanho").value(20));
+        mockMvc.perform(get("/transferencias").header("Authorization", bearer(ana)).param("page", "xyz"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/transferencias").header("Authorization", bearer(ana)).param("contaId", "xyz"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/transferencias").header("Authorization", bearer(ana)).param("page", "99"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.conteudo").isEmpty());
+    }
+
+    @Test
+    void historicoExecutaSomenteConsultaDaPaginaEContagemSemNMaisUm() throws Exception {
+        transferir(ana, contaA1, contaA2, "10.00").andExpect(status().isCreated());
+        transferir(ana, contaA1, contaA2, "10.00").andExpect(status().isCreated());
+        var estatisticas = entityManagerFactory.unwrap(org.hibernate.SessionFactory.class).getStatistics();
+        boolean habilitado = estatisticas.isStatisticsEnabled();
+        estatisticas.setStatisticsEnabled(true);
+        try {
+            long antes = estatisticas.getQueryExecutionCount();
+            mockMvc.perform(get("/transferencias").header("Authorization", bearer(ana)).param("size", "1"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.totalElementos").value(2));
+            assertEquals(2, estatisticas.getQueryExecutionCount() - antes);
+        } finally {
+            estatisticas.setStatisticsEnabled(habilitado);
+        }
+    }
 
     private ResultActions transferir(Sessao sessao, long origem, long destino, String valor) throws Exception {
         return mockMvc.perform(post("/transferencias")
