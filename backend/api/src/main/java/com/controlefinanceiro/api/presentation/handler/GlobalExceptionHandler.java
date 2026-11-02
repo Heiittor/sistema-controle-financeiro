@@ -145,7 +145,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErroResponse> tratarConflitoDeVersao(ObjectOptimisticLockingFailureException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ErroResponse.de(
                 HttpStatus.CONFLICT.value(),
-                "A conta foi alterada por outra operação. Tente novamente."));
+                ex.getPersistentClass() == com.controlefinanceiro.api.domain.Orcamento.class
+                        ? "O orçamento foi alterado por outra operação. Tente novamente."
+                        : "A conta foi alterada por outra operação. Tente novamente."));
     }
 
 }

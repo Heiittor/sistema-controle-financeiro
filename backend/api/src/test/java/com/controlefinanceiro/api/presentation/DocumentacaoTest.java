@@ -20,6 +20,11 @@ class DocumentacaoTest extends IntegracaoBase {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.info.title").value("Sistema de Controle Financeiro"))
                 .andExpect(jsonPath("$.paths['/transferencias']").exists())
+                .andExpect(jsonPath("$.paths['/transferencias'].get").exists())
+                .andExpect(jsonPath("$.paths['/transferencias'].post").exists())
+                .andExpect(jsonPath("$.paths['/orcamentos'].get").exists())
+                .andExpect(jsonPath("$.paths['/orcamentos'].post").exists())
+                .andExpect(jsonPath("$.paths['/orcamentos/{id}'].patch").exists())
                 .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"));
     }
 }
