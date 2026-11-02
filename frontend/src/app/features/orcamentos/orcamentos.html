@@ -1,0 +1,187 @@
+<header class="cabecalho">
+  <div>
+    <h1>Orçamentos</h1>
+    <p>Defina limites de gastos por categoria e acompanhe sua execução.</p>
+  </div>
+</header>
+<div class="acoes">
+  <button mat-flat-button type="button" class="novo" (click)="abrir()">
+    <mat-icon aria-hidden="true">add</mat-icon>Novo orçamento
+  </button>
+</div>
+@if (sucesso(); as mensagem) {
+  <p class="aviso sucesso" role="status">{{ mensagem }}</p>
+}
+@if (estado() === 'pronto') {
+  @if (resultado(); as r) {
+    <dl class="indicadores" aria-label="Resumo de todo o mês selecionado">
+      <div class="indicador ativos">
+        <span class="icone-indicador"><mat-icon aria-hidden="true">calendar_month</mat-icon></span>
+        <div>
+          <dt>Orçamentos ativos</dt>
+          <dd>{{ r.resumo.ativos }}</dd>
+        </div>
+      </div>
+      <div class="indicador dentro">
+        <span class="icone-indicador"><mat-icon aria-hidden="true">check</mat-icon></span>
+        <div>
+          <dt>Dentro do planejado</dt>
+          <dd>{{ r.resumo.dentroDoPlanejado }}</dd>
+        </div>
+      </div>
+      <div class="indicador acima">
+        <span class="icone-indicador"><mat-icon aria-hidden="true">warning</mat-icon></span>
+        <div>
+          <dt>Acima do limite</dt>
+          <dd>{{ r.resumo.acimaDoLimite }}</dd>
+        </div>
+      </div>
+    </dl>
+  }
+}
+<section class="lista" aria-labelledby="titulo-lista">
+  <header class="titulo-lista">
+    <div class="titulo-secao">
+      <mat-icon aria-hidden="true">my_location</mat-icon>
+      <div>
+        <h2 id="titulo-lista">Meus orçamentos</h2>
+        <p>Acompanhe o limite e os gastos de cada categoria.</p>
+      </div>
+    </div>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic"
+      ><mat-label>Período</mat-label><mat-icon matPrefix aria-hidden="true">calendar_month</mat-icon
+      ><input
+        matInput
+        type="month"
+        [value]="mes()"
+        (change)="selecionarMes($event)"
+        min="0001-01"
+        max="9999-12"
+    /></mat-form-field>
+  </header>
+  @if (erroMes(); as mensagem) {
+    <p class="erro" role="alert">{{ mensagem }}</p>
+  }
+  <p class="periodo">
+    Período aplicado: {{ formatarMes(mes()) }} · Atenção a partir de 80% do limite.
+  </p>
+  @switch (estado()) {
+    @case ('carregando') {
+      <p role="status">Carregando orçamentos...</p>
+    }
+    @case ('erro') {
+      <p role="alert" class="erro">{{ erro() }}</p>
+      <button mat-stroked-button type="button" class="tentar" (click)="carregar()">
+        Tentar novamente
+      </button>
+    }
+    @case ('pronto') {
+      @if (resultado(); as r) {
+        @if (r.totalElementos === 0) {
+          <div class="vazio">
+            <mat-icon aria-hidden="true">event_note</mat-icon>
+            <p>
+              Nenhum orçamento neste mês. Defina um limite para começar a acompanhar seus gastos.
+            </p>
+            <button mat-stroked-button type="button" (click)="abrir()">
+              Criar primeiro orçamento
+            </button>
+          </div>
+        } @else {
+          <div class="tabela-rolagem" tabindex="0" role="region" aria-label="Orçamentos do mês">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Categoria</th>
+                  <th scope="col">Período</th>
+                  <th scope="col" class="numero">Limite (R$)</th>
+                  <th scope="col" class="numero">Gasto (R$)</th>
+                  <th scope="col">Progresso</th>
+                  <th scope="col">Situação</th>
+                  <th scope="col">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (o of r.conteudo; track o.id) {
+                  <tr
+                    [class.atencao]="o.situacao === 'ATENCAO'"
+                    [class.ultrapassado]="o.situacao === 'ACIMA_DO_LIMITE'"
+                  >
+                    <td>
+                      <span class="identidade"
+                        ><span class="icone-categoria" [attr.data-icone]="icone(o.categoriaNome)"
+                          ><mat-icon aria-hidden="true">{{
+                            icone(o.categoriaNome)
+                          }}</mat-icon></span
+                        ><strong>{{ o.categoriaNome }}</strong></span
+                      >
+                    </td>
+                    <td class="mes">{{ formatarMes(o.mes) }}</td>
+                    <td class="numero">{{ o.limite | moeda }}</td>
+                    <td class="numero">{{ o.gasto | moeda }}</td>
+                    <td class="progresso">
+                      <strong>{{ percentual(o.percentualConsumido) }}</strong>
+                      <div
+                        class="barra"
+                        role="progressbar"
+                        [attr.aria-label]="'Consumo de ' + o.categoriaNome"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        [attr.aria-valuenow]="largura(o.percentualConsumido)"
+                        [attr.aria-valuetext]="percentual(o.percentualConsumido)"
+                      >
+                        <span [style.width.%]="largura(o.percentualConsumido)"></span>
+                      </div>
+                      <small>Restante: {{ o.restante | moeda }}</small>
+                    </td>
+                    <td>
+                      <span class="situacao"
+                        ><mat-icon aria-hidden="true">{{
+                          o.situacao === 'DENTRO_DO_LIMITE' ? 'check' : 'warning_amber'
+                        }}</mat-icon
+                        >{{ situacoes[o.situacao] }}</span
+                      >
+                    </td>
+                    <td>
+                      <button
+                        mat-icon-button
+                        type="button"
+                        class="editar"
+                        [attr.aria-label]="'Editar limite de ' + o.categoriaNome"
+                        (click)="abrir(o)"
+                      >
+                        <mat-icon aria-hidden="true">edit</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <nav class="paginacao" aria-label="Paginação dos orçamentos">
+            <button
+              mat-stroked-button
+              type="button"
+              class="anterior"
+              [disabled]="r.pagina === 0"
+              (click)="carregar(r.pagina - 1)"
+            >
+              <mat-icon aria-hidden="true">chevron_left</mat-icon>Anterior</button
+            ><span role="status"
+              >Página {{ r.pagina + 1 }} de {{ r.totalPaginas }} ·
+              {{ r.totalElementos === 1 ? '1 orçamento' : r.totalElementos + ' orçamentos' }}</span
+            ><button
+              mat-stroked-button
+              type="button"
+              class="proxima"
+              [disabled]="r.pagina + 1 >= r.totalPaginas"
+              (click)="carregar(r.pagina + 1)"
+            >
+              Próxima<mat-icon iconPositionEnd aria-hidden="true">chevron_right</mat-icon>
+            </button>
+          </nav>
+        }
+      }
+    }
+  }
+</section>

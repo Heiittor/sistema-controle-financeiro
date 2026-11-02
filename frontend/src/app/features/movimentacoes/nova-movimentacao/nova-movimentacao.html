@@ -70,15 +70,20 @@
     <mat-form-field appearance="outline">
       <mat-label>Valor (R$)</mat-label>
       <input matInput type="text" inputmode="decimal" formControlName="valor" autocomplete="off" />
-      <mat-hint>Use vírgula ou ponto, até 2 casas. Sem separador de milhar.</mat-hint>
+      <mat-hint>Ex.: 1.206,35, 1206,35 ou 1206.35. Com milhar, use vírgula decimal.</mat-hint>
       @if (form.controls.valor.hasError('required')) {
         <mat-error>Informe o valor.</mat-error>
       } @else if (form.controls.valor.hasError('formato')) {
-        <mat-error>Use apenas números, com vírgula ou ponto e até 2 casas decimais.</mat-error>
+        <mat-error
+          >Use apenas números em formatos como 1.206,35 ou 1206.35, com até 2 casas
+          decimais.</mat-error
+        >
       } @else if (form.controls.valor.hasError('positivo')) {
         <mat-error>O valor deve ser maior que zero.</mat-error>
       } @else if (form.controls.valor.hasError('precisao')) {
-        <mat-error>Este valor não pode ser enviado sem perda de centavos. Informe um valor menor.</mat-error>
+        <mat-error
+          >Este valor não pode ser enviado sem perda de centavos. Informe um valor menor.</mat-error
+        >
       } @else if (form.controls.valor.hasError('servidor')) {
         <mat-error>{{ form.controls.valor.getError('servidor') }}</mat-error>
       }

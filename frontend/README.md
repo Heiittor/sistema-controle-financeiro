@@ -41,11 +41,11 @@ O backend deve permitir a origem do frontend no CORS; a configuração local já
 | Cadastro, login e logout | Implementados, com tratamento de sessão expirada e limite de tentativas |
 | Contas e categorias | Listagem, criação e filtro de categorias por tipo |
 | Movimentações | Receitas, despesas, histórico por conta e período, paginação, edição de descrição/categoria e estorno |
-| Transferências | Uma operação na API, com atualização posterior dos saldos pela API |
+| Transferências | Envio único, saldos recarregados pela API e histórico persistido paginado, com filtro de conta e direção origem → destino |
 | Navegação | Sidebar recolhível no desktop, menu móvel, título por rota e atalho para o conteúdo |
-| Dashboard | Indicadores B3, série dos últimos seis meses, despesas por categoria, filtro mensal e alternativas textuais dos gráficos |
-| Orçamentos | Placeholder; depende da implementação backend B4 |
-| Resumo por conta | Disponível no backend, ainda sem tela própria |
+| Dashboard | Indicadores B3, série dos últimos seis meses, despesas por categoria, filtro mensal, alternativas textuais dos gráficos e acessos rápidos para receita, despesa, transferência e orçamentos |
+| Orçamentos | B4 integrado: mês, criação e edição do limite, consumo e resumo calculados pela API, alertas de 80%/100% e paginação |
+| Resumo por conta | Indicadores em Movimentações, com conta e período aplicados, recebidos da API |
 
 O [contrato B3](docs/DASHBOARD_B3_PROPOSTA.md) foi implementado e integrado pelo PR #20.
 Execute a versão atual do backend para disponibilizar os endpoints do Dashboard.

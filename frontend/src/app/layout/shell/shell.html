@@ -4,8 +4,25 @@
 
 <mat-sidenav-container
   class="shell"
-  [class.painel]="titulo() === 'Dashboard' || titulo() === 'Contas'"
-  [class.tela-contas]="titulo() === 'Contas'"
+  [class.painel]="
+    titulo() === 'Dashboard' ||
+    titulo() === 'Contas' ||
+    titulo() === 'Movimentações' ||
+    titulo() === 'Categorias' ||
+    titulo() === 'Transferências' ||
+    titulo() === 'Orçamentos'
+  "
+  [class.tela-contas]="
+    titulo() === 'Contas' ||
+    titulo() === 'Movimentações' ||
+    titulo() === 'Categorias' ||
+    titulo() === 'Transferências' ||
+    titulo() === 'Orçamentos'
+  "
+  [class.tela-movimentacoes]="titulo() === 'Movimentações'"
+  [class.tela-categorias]="titulo() === 'Categorias'"
+  [class.tela-transferencias]="titulo() === 'Transferências'"
+  [class.tela-orcamentos]="titulo() === 'Orçamentos'"
   autosize
 >
   <mat-sidenav
@@ -18,7 +35,14 @@
   >
     <div class="menu">
       <p class="marca">
-        @if (titulo() === 'Dashboard' || titulo() === 'Contas') {
+        @if (
+          titulo() === 'Dashboard' ||
+          titulo() === 'Contas' ||
+          titulo() === 'Movimentações' ||
+          titulo() === 'Categorias' ||
+          titulo() === 'Transferências' ||
+          titulo() === 'Orçamentos'
+        ) {
           <svg class="marca-painel" viewBox="0 0 54 58" aria-hidden="true">
             <g fill="currentColor">
               <rect x="2" y="40" width="12" height="16" rx="1" />
@@ -75,7 +99,21 @@
                 (click)="compacto() && menu.close()"
               >
                 <mat-icon>{{
-                  titulo() === 'Dashboard' && item.rota === '/' ? 'home' : item.icone
+                  (titulo() === 'Dashboard' ||
+                    titulo() === 'Movimentações' ||
+                    titulo() === 'Categorias' ||
+                    titulo() === 'Transferências' ||
+                    titulo() === 'Orçamentos') &&
+                  item.rota === '/'
+                    ? 'home'
+                    : (titulo() === 'Movimentações' || titulo() === 'Categorias') &&
+                        item.rota === '/movimentacoes'
+                      ? 'swap_horiz'
+                      : titulo() === 'Categorias' && item.rota === '/categorias'
+                        ? 'hub'
+                        : titulo() === 'Orçamentos' && item.rota === '/orcamentos'
+                          ? 'calendar_month'
+                          : item.icone
                 }}</mat-icon>
                 <span class="rotulo">{{
                   titulo() === 'Dashboard' && item.rota === '/' ? 'Visão geral' : item.rotulo

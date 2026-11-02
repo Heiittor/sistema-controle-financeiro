@@ -24,7 +24,9 @@ describe('NovaMovimentacao', () => {
   const texto = () => tela().textContent!.replace(/\s/g, ' ');
 
   function preencher(campo: string, valor: string, evento = 'input'): void {
-    const el = tela().querySelector<HTMLInputElement | HTMLSelectElement>(`[formControlName="${campo}"]`)!;
+    const el = tela().querySelector<HTMLInputElement | HTMLSelectElement>(
+      `[formControlName="${campo}"]`,
+    )!;
     el.value = valor;
     el.dispatchEvent(new Event(evento));
   }
@@ -75,7 +77,9 @@ describe('NovaMovimentacao', () => {
     responderCategorias('DESPESA', DESPESAS);
 
     expect(texto()).toContain('Mercado');
-    expect(tela().querySelector<HTMLInputElement>('input[formControlName="data"]')!.value).toBe('2026-10-22');
+    expect(tela().querySelector<HTMLInputElement>('input[formControlName="data"]')!.value).toBe(
+      '2026-10-22',
+    );
   });
 
   it('trocar o tipo recarrega as categorias do tipo escolhido', () => {
@@ -94,6 +98,22 @@ describe('NovaMovimentacao', () => {
     expect(texto()).toContain('Você ainda não tem categorias deste tipo.');
     expect(tela().querySelector('a[href="/categorias"]')).not.toBeNull();
     expect(tela().querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true);
+  });
+
+  it('envia valor brasileiro como número no contrato de despesa', () => {
+    responderCategorias('DESPESA', DESPESAS);
+    preencherValido('1.206.350,50');
+    enviar();
+    const req = backend.expectOne(`${API}/contas/1/despesas`);
+    expect(req.request.body.valor).toBe(1206350.5);
+    req.flush(
+      { status: 422, mensagem: 'Saldo insuficiente.', timestamp: 'x', campos: [] },
+      { status: 422, statusText: 'erro' },
+    );
+    fixture.detectChanges();
+    expect(tela().querySelector<HTMLInputElement>('[formControlName="valor"]')!.value).toBe(
+      '1.206.350,50',
+    );
   });
 
   it('não envia com campos vazios e mostra os erros', () => {
@@ -137,7 +157,12 @@ describe('NovaMovimentacao', () => {
 
     const req = backend.expectOne(`${API}/contas/1/despesas`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ categoriaId: 5, descricao: 'Mercado', valor: 10.5, data: '2026-10-22' });
+    expect(req.request.body).toEqual({
+      categoriaId: 5,
+      descricao: 'Mercado',
+      valor: 10.5,
+      data: '2026-10-22',
+    });
     req.flush({});
 
     expect(ref.close).toHaveBeenCalledWith({ contaId: 1, data: '2026-10-22' });
@@ -154,7 +179,12 @@ describe('NovaMovimentacao', () => {
     enviar();
 
     const req = backend.expectOne(`${API}/contas/1/receitas`);
-    expect(req.request.body).toEqual({ categoriaId: 8, descricao: 'Salário', valor: 1500, data: '2026-10-22' });
+    expect(req.request.body).toEqual({
+      categoriaId: 8,
+      descricao: 'Salário',
+      valor: 1500,
+      data: '2026-10-22',
+    });
     req.flush({});
   });
 
@@ -163,10 +193,12 @@ describe('NovaMovimentacao', () => {
 
     preencherValido('99999');
     enviar();
-    backend.expectOne(`${API}/contas/1/despesas`).flush(
-      { status: 422, mensagem: 'Saldo insuficiente.', timestamp: 'x', campos: [] },
-      { status: 422, statusText: 'erro' },
-    );
+    backend
+      .expectOne(`${API}/contas/1/despesas`)
+      .flush(
+        { status: 422, mensagem: 'Saldo insuficiente.', timestamp: 'x', campos: [] },
+        { status: 422, statusText: 'erro' },
+      );
     fixture.detectChanges();
 
     expect(tela().querySelector('.erro')!.textContent).toContain('Saldo insuficiente.');

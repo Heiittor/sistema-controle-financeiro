@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormGroupDirective,
@@ -11,6 +18,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { mensagemDeErro } from '../../core/api/mensagem-erro';
@@ -20,18 +28,31 @@ import { converterValor, validarValor } from '../../shared/forms/valor';
 import { MoedaPipe } from '../../shared/pipes/moeda-pipe';
 import { Conta } from '../contas/conta.models';
 import { ContasService } from '../contas/contas.service';
-import { Transferencia } from './transferencia.models';
+import { LogoBanco } from '../contas/logo-banco';
+import { Transferencia, TransferenciaHistorico } from './transferencia.models';
+import { Pagina } from '../../core/api/pagina';
 import { TransferenciasService } from './transferencias.service';
 
 // Só orienta o usuário: o backend também recusa origem igual ao destino (422).
 const diferenteDaOrigem: ValidatorFn = (controle): ValidationErrors | null => {
   const origem = controle.parent?.get('contaOrigemId')?.value;
-  return origem !== undefined && origem !== '' && origem === controle.value ? { mesmaConta: true } : null;
+  return origem !== undefined && origem !== '' && origem === controle.value
+    ? { mesmaConta: true }
+    : null;
 };
 
 @Component({
   selector: 'app-transferencias',
-  imports: [ReactiveFormsModule, RouterLink, MatFormFieldModule, MatInputModule, MatButtonModule, MoedaPipe],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    LogoBanco,
+    MoedaPipe,
+  ],
   templateUrl: './transferencias.html',
   styleUrl: './transferencias.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,6 +61,7 @@ export class Transferencias {
   private readonly contasApi = inject(ContasService);
   private readonly api = inject(TransferenciasService);
   private readonly diretiva = viewChild(FormGroupDirective);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly formatarData = formatarData;
 
@@ -60,13 +82,47 @@ export class Transferencias {
   protected readonly erro = signal<string | null>(null);
   // O que a API devolveu na última transferência. A mensagem de sucesso usa isto, e não o que foi digitado.
   protected readonly ultima = signal<Transferencia | null>(null);
+  protected readonly historico = signal<Pagina<TransferenciaHistorico> | null>(null);
+  protected readonly filtroHistorico = signal<number | null>(null);
+  protected readonly estadoHistorico = signal<'carregando' | 'erro' | 'pronto'>('carregando');
+  protected readonly erroHistorico = signal<string | null>(null);
+  private consultaHistorico = 0;
+  private paginaHistorico = 0;
 
   constructor() {
     this.carregarContas();
+    this.carregarHistorico();
     // Trocar a origem pode tornar o destino inválido (ou válido): reavalia.
     this.form.controls.contaOrigemId.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.form.controls.contaDestinoId.updateValueAndValidity());
+  }
+
+  protected filtrarHistorico(evento: Event): void {
+    const valor = (evento.target as HTMLSelectElement).value;
+    this.filtroHistorico.set(valor === '' ? null : Number(valor));
+    this.carregarHistorico(0);
+  }
+
+  protected carregarHistorico(pagina = this.paginaHistorico): void {
+    const consulta = ++this.consultaHistorico;
+    this.paginaHistorico = pagina;
+    this.estadoHistorico.set('carregando');
+    this.api
+      .listar(this.filtroHistorico(), pagina)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (historico) => {
+          if (consulta !== this.consultaHistorico) return;
+          this.historico.set(historico);
+          this.estadoHistorico.set('pronto');
+        },
+        error: (erro: unknown) => {
+          if (consulta !== this.consultaHistorico) return;
+          this.erroHistorico.set(mensagemDeErro(erro));
+          this.estadoHistorico.set('erro');
+        },
+      });
   }
 
   protected carregarContas(mostrarCarregando = true): void {
@@ -125,6 +181,7 @@ export class Transferencias {
           });
           // Os saldos novos vêm da API. O front não soma nem subtrai nada.
           this.carregarContas(false);
+          this.carregarHistorico(0);
         },
         // Tentativa falha: o formulário fica como está, para o usuário corrigir.
         error: (erro: unknown) => this.erro.set(tratarErroDeEnvio(this.form, erro, null)),

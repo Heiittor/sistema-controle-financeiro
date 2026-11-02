@@ -1,0 +1,86 @@
+<h2 mat-dialog-title>{{ dados.orcamento ? 'Editar limite' : 'Novo orçamento' }}</h2>
+<form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+  <mat-dialog-content>
+    @if (dados.orcamento; as o) {
+      <p class="ajuda">{{ o.categoriaNome }} · {{ o.mes }}</p>
+    } @else {
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Categoria de despesa</mat-label>
+        <select matNativeControl formControlName="categoriaId">
+          <option value="" disabled>Selecione</option>
+          @for (c of categorias(); track c.id) {
+            <option [value]="c.id">{{ c.nome }}</option>
+          }
+        </select>
+        @if (form.controls.categoriaId.hasError('required')) {
+          <mat-error>Escolha a categoria.</mat-error>
+        } @else if (form.controls.categoriaId.hasError('servidor')) {
+          <mat-error>{{ form.controls.categoriaId.getError('servidor') }}</mat-error>
+        }
+      </mat-form-field>
+      @switch (estado()) {
+        @case ('carregando') {
+          <p role="status">Carregando categorias...</p>
+        }
+        @case ('erro') {
+          <p role="alert" class="erro">{{ erroCategorias() }}</p>
+          <button mat-stroked-button type="button" (click)="carregarCategorias()">
+            Tentar novamente
+          </button>
+        }
+        @case ('pronto') {
+          @if (categorias().length === 0) {
+            <p>
+              Cadastre uma
+              <a routerLink="/categorias" mat-dialog-close>categoria de despesa</a> para criar um
+              orçamento.
+            </p>
+          }
+        }
+      }
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Mês</mat-label
+        ><input matInput type="month" formControlName="mes" min="0001-01" max="9999-12" />
+        @if (form.controls.mes.invalid) {
+          <mat-error>Informe um mês válido.</mat-error>
+        }
+      </mat-form-field>
+    }
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Limite (R$)</mat-label
+      ><input
+        matInput
+        formControlName="limite"
+        type="text"
+        inputmode="decimal"
+        autocomplete="off"
+        placeholder="Ex.: 1.200,00"
+      />
+      <mat-hint>Use 1.200,00 ou 1200.00, com até 2 casas decimais.</mat-hint>
+      @if (form.controls.limite.hasError('required')) {
+        <mat-error>Informe o limite.</mat-error>
+      } @else if (form.controls.limite.hasError('positivo')) {
+        <mat-error>O limite deve ser maior que zero.</mat-error>
+      } @else if (form.controls.limite.hasError('formato')) {
+        <mat-error>Use um formato válido, como 1.200,00 ou 1200.00.</mat-error>
+      } @else if (form.controls.limite.hasError('precisao')) {
+        <mat-error>Este valor perderia centavos. Informe um valor menor.</mat-error>
+      } @else if (form.controls.limite.hasError('servidor')) {
+        <mat-error>{{ form.controls.limite.getError('servidor') }}</mat-error>
+      }
+    </mat-form-field>
+    @if (erro(); as mensagem) {
+      <p role="alert" class="erro">{{ mensagem }}</p>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end"
+    ><button mat-button type="button" mat-dialog-close [disabled]="enviando()">Cancelar</button>
+    <button
+      mat-flat-button
+      type="submit"
+      [disabled]="enviando() || estado() !== 'pronto' || (!dados.orcamento && !categorias().length)"
+    >
+      {{ enviando() ? 'Salvando...' : 'Salvar orçamento' }}
+    </button>
+  </mat-dialog-actions>
+</form>

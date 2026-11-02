@@ -331,6 +331,16 @@ mat-sidenav-content {
   flex-shrink: 0;
   filter: drop-shadow(0 0 8px #8fb6ff);
 }
+.tela-movimentacoes,
+.tela-categorias,
+.tela-transferencias,
+.tela-orcamentos {
+  .secao-menu {
+    display: block;
+    margin: 12px 18px 22px;
+    font-size: 10px;
+  }
+}
 .tela-contas {
   background: radial-gradient(ellipse at 68% 28%, #e2ecff99, transparent 70%), #f6f8ff;
   .sidebar {
@@ -401,4 +411,13 @@ mat-sidenav-content {
   .tela-contas .sair {
     margin-left: auto;
   }
+}
+.tela-movimentacoes .sair,
+.tela-categorias .sair,
+.tela-transferencias .sair,
+.tela-orcamentos .sair {
+  color: #0056ff;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
 }

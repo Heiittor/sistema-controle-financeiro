@@ -1,74 +1,331 @@
+﻿@use '@angular/material' as mat;
 @use '../../shared/estilos/mensagens';
 
 :host {
   display: flex;
   flex-direction: column;
-  gap: var(--app-espaco-8);
+  gap: 20px;
+  color: #090e37;
 }
-
+h1,
+h2,
+p,
+dl,
+dd {
+  margin: 0;
+}
+h1 {
+  font-size: 40px;
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: -1px;
+}
+.cabecalho {
+  padding-right: 110px;
+}
+.cabecalho p {
+  margin-top: 8px;
+  font-size: 20px;
+  color: #52648e;
+}
+.paineis {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 18px;
+}
+section {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid #edf1fa;
+  border-radius: 18px;
+  background: #ffffffc2;
+  box-shadow:
+    0 3px 5px #16377005,
+    0 8px 20px #2753ad0a;
+}
 h2 {
-  margin: 0 0 var(--app-espaco-4);
-  font: var(--mat-sys-title-medium);
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 750;
+  letter-spacing: -0.5px;
 }
-
+.titulo-secao,
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.titulo-secao {
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+.titulo-secao p {
+  color: #52648e;
+  font-size: 14px;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+.icone-titulo {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #e0ecff, #aecaff);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #0056ff;
+}
+.icone-titulo mat-icon {
+  width: 30px;
+  height: 30px;
+  font-size: 30px;
+}
+h2 > mat-icon {
+  color: #0056ff;
+  width: 28px;
+  height: 28px;
+  font-size: 28px;
+  flex-shrink: 0;
+}
 form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--app-espaco-2);
-  max-width: 24rem;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 18px 16px;
+  align-items: start;
 }
-
+form > button,
+form > p {
+  grid-column: 1 / -1;
+}
 mat-form-field {
+  min-width: 0;
   width: 100%;
+  @include mat.form-field-overrides(
+    (
+      outlined-container-shape: 8px,
+      outlined-outline-color: #bdc8e1,
+      outlined-focus-outline-color: #0056ff,
+      outlined-label-text-color: #14234c,
+      outlined-label-text-weight: 600,
+      container-text-weight: 600,
+      container-height: 48px,
+      container-vertical-padding: 11px,
+    )
+  );
 }
-
-.filtro-campo {
-  max-width: 14rem;
+form > button {
+  min-height: 42px;
+  border-radius: 24px;
+  background: #0056ff;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
 }
-
-.vazio {
-  margin: 0;
-  color: var(--mat-sys-on-surface-variant);
+form > button:disabled {
+  background: #c7d4ee;
+  color: #57688d;
 }
-
-.categorias {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.resumo {
   display: flex;
   flex-direction: column;
-  gap: var(--app-espaco-2);
-
-  li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--app-espaco-4);
-    padding: var(--app-espaco-4);
-    border: 1px solid var(--mat-sys-outline-variant);
-    border-radius: var(--mat-sys-corner-medium);
-    background: var(--mat-sys-surface-container-lowest);
-  }
 }
-
+.indicadores {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 26px;
+}
+.indicador {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 22px;
+  min-width: 0;
+  border-radius: 16px;
+}
+.indicador.receita {
+  background: linear-gradient(120deg, #ecfaf3, #eaf8f2);
+}
+.indicador.despesa {
+  background: linear-gradient(120deg, #fff2f5, #fcf0f4);
+}
+.icone-indicador {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: white;
+  background: linear-gradient(#27d677, #009d42);
+  border: 5px solid #a3e7c3;
+}
+.despesa .icone-indicador {
+  background: linear-gradient(#ff8b99, #ff173a);
+  border-color: #ffc5ce;
+}
+.icone-indicador mat-icon {
+  width: 22px;
+  height: 22px;
+  font-size: 22px;
+}
+dt {
+  font-size: 14px;
+  font-weight: 650;
+  margin: 2px 0 10px;
+}
+dd {
+  font-size: 34px;
+  font-weight: 750;
+  line-height: 1;
+}
+.escopo {
+  color: #66769b;
+  font-size: 12px;
+  margin-top: 12px;
+}
+.estado-resumo {
+  margin-top: 26px;
+  color: #66769b;
+}
+.filtro-campo {
+  display: block;
+  max-width: 300px;
+  margin-block: 20px 16px;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 15px;
+  text-align: left;
+}
+th {
+  color: #182955;
+  background: #eaf0fd;
+  font-weight: 650;
+  padding: 8px 16px;
+}
+th:first-child {
+  width: 55%;
+}
+td {
+  padding: 9px 16px;
+  border-bottom: 1px solid #e6ecf8;
+}
+.identidade {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+.icone-categoria {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 36px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  color: #0056ff;
+  background: #e5edff;
+}
+.icone-categoria[data-icone='restaurant'] {
+  color: #fa7c21;
+  background: #fff0e3;
+}
+.icone-categoria[data-icone='work'] {
+  color: #122968;
+  background: #e2eaff;
+}
+.icone-categoria[data-icone='directions_car'] {
+  color: #7851d4;
+  background: #f0e9ff;
+}
 .nome {
-  font: var(--mat-sys-title-small);
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
-
-// O tipo aparece escrito; a cor só reforça (regra do tema: cor nunca sozinha).
 .tipo {
-  padding: 0.125rem var(--app-espaco-2);
-  border: 1px solid currentColor;
-  border-radius: var(--mat-sys-corner-full);
-  font: var(--mat-sys-label-small);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 24px;
+  padding: 5px 12px;
+  font-weight: 650;
   white-space: nowrap;
-
-  &.receita {
-    color: var(--app-receita);
+}
+.tipo mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+.tipo.receita {
+  color: #009c3b;
+  background: #d8f8e7;
+}
+.tipo.despesa {
+  color: #e61839;
+  background: #ffe1e7;
+}
+.total {
+  margin-top: 22px;
+  font-size: 14px;
+  font-weight: 650;
+  text-align: center;
+}
+.vazio {
+  color: #63769d;
+}
+@media (max-width: 1250px) {
+  .paineis {
+    grid-template-columns: 1fr;
   }
-
-  &.despesa {
-    color: var(--app-despesa);
+  .indicador {
+    align-items: center;
+  }
+}
+@media (max-width: 1000px) {
+  h1 {
+    font-size: 32px;
+  }
+}
+@media (max-width: 600px) {
+  .cabecalho {
+    padding-right: 0;
+  }
+  .cabecalho p {
+    font-size: 17px;
+  }
+  section {
+    padding: 18px;
+  }
+  h2 {
+    font-size: 21px;
+  }
+  form {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+  .indicadores {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .indicador {
+    padding: 18px;
+  }
+  .filtro-campo {
+    max-width: none;
+  }
+  th,
+  td {
+    padding-inline: 8px;
+  }
+  .identidade {
+    gap: 10px;
+  }
+  .tipo {
+    padding-inline: 8px;
+    gap: 4px;
+    font-size: 13px;
   }
 }

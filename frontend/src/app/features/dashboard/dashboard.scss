@@ -11,7 +11,6 @@ p {
 .acoes,
 .filtro,
 .mes,
-.nova,
 h3,
 .chaves,
 .chaves span {
@@ -56,15 +55,66 @@ h1 {
   min-width: 0;
   width: 145px;
 }
-.nova {
-  color: white;
-  background: #0056ff;
-  padding: 13px 20px;
+.acessos-rapidos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.atalho {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 10px;
-  border-radius: 16px;
-  text-decoration: none;
+  padding: 14px;
+  min-height: 52px;
+  border: 1px solid #dce5f7;
+  border-radius: 14px;
+  font: inherit;
   font-weight: 600;
-  white-space: nowrap;
+  color: #16418c;
+  background: #edf3ff;
+  text-decoration: none;
+  cursor: pointer;
+}
+.atalho.receita {
+  color: #11643b;
+  background: #eaf9f3;
+}
+.atalho.despesa {
+  color: #a82440;
+  background: #fff0f2;
+}
+.atalho mat-icon {
+  flex-shrink: 0;
+}
+.atalho:focus-visible {
+  outline: 2px solid #0056ff;
+  outline-offset: 3px;
+}
+.atalho:hover:not(:disabled) {
+  box-shadow: 0 3px 10px #173e8514;
+}
+.atalho:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.sucesso-atalho {
+  background: #e8f8ef;
+  color: #11643b;
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+@media (max-width: 1000px) {
+  .acessos-rapidos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 480px) {
+  .acessos-rapidos {
+    grid-template-columns: 1fr;
+  }
 }
 .indicadores {
   display: grid;

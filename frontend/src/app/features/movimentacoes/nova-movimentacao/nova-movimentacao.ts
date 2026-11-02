@@ -19,6 +19,7 @@ import { MovimentacoesService } from '../movimentacoes.service';
 export interface DadosNovaMovimentacao {
   contas: Conta[];
   contaIdInicial: number;
+  tipoInicial?: TipoCategoria;
 }
 
 // O que a tela precisa saber para avisar o usuário e recarregar o histórico.
@@ -29,14 +30,22 @@ export interface MovimentacaoRegistrada {
 
 @Component({
   selector: 'app-nova-movimentacao',
-  imports: [ReactiveFormsModule, RouterLink, MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+  ],
   templateUrl: './nova-movimentacao.html',
   styleUrl: './nova-movimentacao.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NovaMovimentacao {
   private readonly dados = inject<DadosNovaMovimentacao>(MAT_DIALOG_DATA);
-  private readonly ref = inject<MatDialogRef<NovaMovimentacao, MovimentacaoRegistrada>>(MatDialogRef);
+  private readonly ref =
+    inject<MatDialogRef<NovaMovimentacao, MovimentacaoRegistrada>>(MatDialogRef);
   private readonly categoriasApi = inject(CategoriasService);
   private readonly api = inject(MovimentacoesService);
 
@@ -45,7 +54,7 @@ export class NovaMovimentacao {
 
   // Os nomes de categoriaId, descricao, valor e data são os do backend: o campos[] do 400 cai no lugar certo.
   protected readonly form = inject(NonNullableFormBuilder).group({
-    tipo: ['DESPESA' as TipoCategoria, [Validators.required]],
+    tipo: [this.dados.tipoInicial ?? ('DESPESA' as TipoCategoria), [Validators.required]],
     conta: [String(this.dados.contaIdInicial), [Validators.required]],
     categoriaId: ['', [Validators.required]],
     descricao: ['', [Validators.required, Validators.maxLength(255)]],
@@ -68,7 +77,9 @@ export class NovaMovimentacao {
 
   constructor() {
     this.carregarCategorias();
-    this.form.controls.tipo.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.carregarCategorias());
+    this.form.controls.tipo.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.carregarCategorias());
   }
 
   protected carregarCategorias(): void {

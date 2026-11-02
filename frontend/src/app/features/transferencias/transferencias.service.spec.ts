@@ -20,13 +20,34 @@ describe('TransferenciasService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: API }],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: API_URL, useValue: API },
+      ],
     });
     service = TestBed.inject(TransferenciasService);
     backend = TestBed.inject(HttpTestingController);
   });
 
   afterEach(() => backend.verify());
+
+  it('consulta todas as transferências com paginação, sem corte de período', () => {
+    service.listar(null, 2).subscribe();
+    const req = backend.expectOne((r) => r.url === `${API}/transferencias`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.keys().sort()).toEqual(['page', 'size']);
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('size')).toBe('5');
+    req.flush({ conteudo: [], pagina: 2, tamanho: 5, totalElementos: 0, totalPaginas: 0 });
+  });
+
+  it('envia o filtro de conta sem mudar o contrato do POST', () => {
+    service.listar(7).subscribe();
+    const req = backend.expectOne((r) => r.url === `${API}/transferencias`);
+    expect(req.request.params.get('contaId')).toBe('7');
+    req.flush({ conteudo: [], pagina: 0, tamanho: 5, totalElementos: 0, totalPaginas: 0 });
+  });
 
   it('envia uma única requisição POST com os dados da transferência', () => {
     service.transferir(DADOS).subscribe();

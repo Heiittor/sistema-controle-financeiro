@@ -16,3 +16,8 @@ export interface Transferencia {
   valor: number;
   data: string;
 }
+
+export interface TransferenciaHistorico extends Transferencia {
+  contaOrigemNome: string;
+  contaDestinoNome: string;
+}

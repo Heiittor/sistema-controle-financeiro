@@ -4,7 +4,13 @@ import { converterValor, validarValor } from './valor';
 
 describe('converterValor', () => {
   it('recusa valores cujo JSON perderia centavos', () => {
-    for (const texto of ['999999999999999.99', '999999999999999,99', '100000000000000.01']) {
+    for (const texto of [
+      '999999999999999.99',
+      '999999999999999,99',
+      '100000000000000.01',
+      '999.999.999.999.999,99',
+      '100.000.000.000.000,01',
+    ]) {
       expect(converterValor(texto)).toBeNull();
       expect(validarValor(new FormControl(texto))).toEqual({ precisao: true });
     }
@@ -38,10 +44,73 @@ describe('converterValor', () => {
     }
   });
 
-  it('recusa mais de 2 casas e separador de milhar (ambíguo)', () => {
-    for (const texto of ['10,555', '10.000', '1.000,50', '1,000.50']) {
+  it('recusa mais de 2 casas, milhar sem vírgula decimal e formato americano', () => {
+    for (const texto of [
+      '10,555',
+      '10.000',
+      '1.206',
+      '1.206.350',
+      '1.000,505',
+      '1,000.50',
+      '1,206,350.50',
+    ]) {
       expect(converterValor(texto)).toBeNull();
+      expect(validarValor(new FormControl(texto))).toEqual({ formato: true });
     }
+  });
+
+  it('converte estritamente os formatos brasileiros e simples para o mesmo número', () => {
+    for (const [texto, esperado] of [
+      ['1.206,35', 1206.35],
+      ['1.206.350,50', 1206350.5],
+      ['1206,35', 1206.35],
+      ['1206.35', 1206.35],
+      ['1.000,5', 1000.5],
+      ['12.345,00', 12345],
+      ['123.456.789,01', 123456789.01],
+      ['  1.206,35  ', 1206.35],
+      ['999.999.999.999.999,00', 999999999999999],
+    ] as const) {
+      expect(converterValor(texto)).toBe(esperado);
+      expect(validarValor(new FormControl(texto))).toBeNull();
+    }
+  });
+
+  it('não remove pontuação nem espaços de agrupamentos incorretos', () => {
+    for (const texto of [
+      '12.06,35',
+      '1.20.350,50',
+      '1234.567,89',
+      '01.206,35',
+      '0.000,01',
+      '1..206,35',
+      '.206,35',
+      '1.206,,35',
+      '1.206,',
+      '1 206,35',
+      '1\u00a0206,35',
+      'R$ 1.206,35',
+      '+1206,35',
+      '-1.206,35',
+      'NaN',
+      'Infinity',
+      '0x10',
+      '1e3',
+      '1000000000000000',
+      '1.000.000.000.000.000,00',
+    ]) {
+      expect(converterValor(texto)).toBeNull();
+      expect(validarValor(new FormControl(texto))).toEqual({ formato: true });
+    }
+  });
+
+  it('recusa zero também no conversor, sem arredondar frações inválidas', () => {
+    for (const texto of ['0', '00', '0,0', '000,00', '0.00']) {
+      expect(converterValor(texto)).toBeNull();
+      expect(validarValor(new FormControl(texto))).toEqual({ positivo: true });
+    }
+    for (const texto of ['0,001', '0.009', '1.206,359']) expect(converterValor(texto)).toBeNull();
+    expect(validarValor(new FormControl(null))).toBeNull();
   });
 
   it('o validador diferencia formato inválido, zero e vazio', () => {
