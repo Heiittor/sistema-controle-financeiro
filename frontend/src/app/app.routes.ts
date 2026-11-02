@@ -1,10 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 
-// Áreas sem funcionalidade ainda usam "Em construção". Cada fase troca a sua rota pela tela real.
-const emConstrucao = () =>
-  import('./shared/componentes/em-construcao/em-construcao').then((m) => m.EmConstrucao);
-
 export const routes: Routes = [
   {
     path: 'login',
@@ -49,7 +45,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/transferencias/transferencias').then((m) => m.Transferencias),
       },
-      { path: 'orcamentos', title: 'Orçamentos', loadComponent: emConstrucao },
+      {
+        path: 'orcamentos',
+        title: 'Orçamentos',
+        loadComponent: () => import('./features/orcamentos/orcamentos').then((m) => m.Orcamentos),
+      },
     ],
   },
   {

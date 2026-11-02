@@ -18,7 +18,8 @@ describe('Categorias', () => {
 
   const tela = () => fixture.nativeElement as HTMLElement;
   const texto = () => tela().textContent!.replace(/\s/g, ' ');
-  const itens = () => Array.from(tela().querySelectorAll('ul.categorias li')).map((li) => li.textContent!);
+  const itens = () =>
+    Array.from(tela().querySelectorAll('table.categorias tbody tr')).map((li) => li.textContent!);
 
   function digitarNome(valor: string): void {
     const input = tela().querySelector<HTMLInputElement>('input')!;
@@ -46,7 +47,11 @@ describe('Categorias', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [Categorias],
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: API }],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: API_URL, useValue: API },
+      ],
     });
     backend = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(Categorias);
@@ -71,6 +76,9 @@ describe('Categorias', () => {
     expect(itens()[0]).toContain('Receita');
     expect(itens()[1]).toContain('Mercado');
     expect(itens()[1]).toContain('Despesa');
+    expect(tela().querySelectorAll('.indicador dd')[0].textContent).toBe('1');
+    expect(tela().querySelectorAll('.indicador dd')[1].textContent).toBe('1');
+    expect(tela().querySelector('table button')).toBeNull();
   });
 
   it('mostra o estado vazio quando não há categorias', () => {
@@ -86,6 +94,9 @@ describe('Categorias', () => {
     responderLista([], '?tipo=DESPESA');
 
     expect(texto()).toContain('Nenhuma categoria deste tipo.');
+    expect(tela().querySelectorAll('.indicador dd')[0].textContent).toBe('0');
+    expect(tela().querySelectorAll('.indicador dd')[1].textContent).toBe('0');
+    expect(texto()).toContain('Contagem da lista filtrada por Despesa');
   });
 
   it('em erro mostra a mensagem da API e permite tentar novamente', () => {

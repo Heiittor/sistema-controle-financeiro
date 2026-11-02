@@ -13,10 +13,24 @@ export interface FiltroHistorico {
   tamanho: number;
 }
 
+export interface ResumoConta {
+  inicio: string;
+  fim: string;
+  totalReceitas: number;
+  totalDespesas: number;
+  saldoDoPeriodo: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class MovimentacoesService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = inject(API_URL);
+
+  resumo(contaId: number, inicio: string, fim: string): Observable<ResumoConta> {
+    return this.http.get<ResumoConta>(`${this.apiUrl}/contas/${contaId}/resumo`, {
+      params: { inicio, fim },
+    });
+  }
 
   // Período sempre explícito: o front não depende do padrão do servidor.
   listar(contaId: number, filtro: FiltroHistorico): Observable<Pagina<Transacao>> {
@@ -25,7 +39,9 @@ export class MovimentacoesService {
       .set('fim', filtro.fim)
       .set('page', filtro.pagina)
       .set('size', filtro.tamanho);
-    return this.http.get<Pagina<Transacao>>(`${this.apiUrl}/contas/${contaId}/transacoes`, { params });
+    return this.http.get<Pagina<Transacao>>(`${this.apiUrl}/contas/${contaId}/transacoes`, {
+      params,
+    });
   }
 
   // O tipo escolhe a rota (receitas ou despesas): o cliente não consegue contradizê-la no corpo.
@@ -43,6 +59,9 @@ export class MovimentacoesService {
   }
 
   editar(contaId: number, transacaoId: number, dados: EdicaoTransacao): Observable<Transacao> {
-    return this.http.patch<Transacao>(`${this.apiUrl}/contas/${contaId}/transacoes/${transacaoId}`, dados);
+    return this.http.patch<Transacao>(
+      `${this.apiUrl}/contas/${contaId}/transacoes/${transacaoId}`,
+      dados,
+    );
   }
 }

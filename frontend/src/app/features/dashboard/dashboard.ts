@@ -5,8 +5,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
-import { forkJoin, Subscription } from 'rxjs';
+import { finalize, forkJoin, Subscription } from 'rxjs';
 import { mensagemDeErro } from '../../core/api/mensagem-erro';
 import { hojeNegocio, formatarData } from '../../shared/datas/datas';
 import { MoedaPipe } from '../../shared/pipes/moeda-pipe';
@@ -20,6 +21,13 @@ import { periodoDashboard, rotuloMes } from './periodo-dashboard';
 import { UltimasMovimentacoesService } from './ultimas-movimentacoes.service';
 import { Transacao, INFO_TIPO } from '../movimentacoes/transacao.models';
 import { minigrafico } from './painel-graficos';
+import { Conta } from '../contas/conta.models';
+import { TipoCategoria } from '../categorias/categoria.models';
+import {
+  DadosNovaMovimentacao,
+  MovimentacaoRegistrada,
+  NovaMovimentacao,
+} from '../movimentacoes/nova-movimentacao/nova-movimentacao';
 
 @Component({
   selector: 'app-dashboard',
@@ -42,6 +50,10 @@ export class Dashboard {
   private readonly api = inject(DashboardService);
   private readonly contas = inject(ContasService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dialogo = inject(MatDialog);
+  private dialogoAberto = false;
+  protected readonly contasDisponiveis = signal<Conta[]>([]);
+  protected readonly sucesso = signal<string | null>(null);
   private readonly historico = inject(UltimasMovimentacoesService);
   private consultaHistorico?: Subscription;
   protected readonly ultimas = signal<Transacao[]>([]);
@@ -91,6 +103,8 @@ export class Dashboard {
       return;
     }
     this.consulta?.unsubscribe();
+    this.sucesso.set(null);
+    this.contasDisponiveis.set([]);
     this.consultaHistorico?.unsubscribe();
     this.ultimas.set([]);
     this.estadoHistorico.set('carregando');
@@ -105,6 +119,7 @@ export class Dashboard {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ contas, resumo, serie }) => {
+          this.contasDisponiveis.set(contas);
           this.dados.set({
             resumo,
             serie,
@@ -136,6 +151,38 @@ export class Dashboard {
           this.erro.set(mensagemDeErro(erro));
           this.estado.set('erro');
         },
+      });
+  }
+
+  protected registrar(tipo: TipoCategoria): void {
+    const contas = this.contasDisponiveis();
+    const dados = this.dados();
+    if (this.estado() !== 'pronto' || !contas.length || !dados || this.dialogoAberto) return;
+    this.dialogoAberto = true;
+    this.dialogo
+      .open<NovaMovimentacao, DadosNovaMovimentacao, MovimentacaoRegistrada>(NovaMovimentacao, {
+        data: { contas, contaIdInicial: contas[0].id, tipoInicial: tipo },
+        width: '32rem',
+        maxWidth: '95vw',
+        restoreFocus: true,
+      })
+      .afterClosed()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => (this.dialogoAberto = false)),
+      )
+      .subscribe((registrada) => {
+        if (!registrada) return;
+        // Se o campo de mês foi esvaziado, recarrega o último mês efetivamente exibido.
+        if (!periodoDashboard(this.form.controls.mes.value))
+          this.form.controls.mes.setValue(dados.resumo.inicio.slice(0, 7));
+        const periodo = periodoDashboard(this.form.controls.mes.value)!;
+        this.carregar();
+        this.sucesso.set(
+          registrada.data < periodo.inicio || registrada.data > periodo.fim
+            ? `Movimentação registrada em ${formatarData(registrada.data)}, fora do período exibido.`
+            : 'Movimentação registrada.',
+        );
       });
   }
 }

@@ -4,16 +4,26 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { mensagemDeErro } from '../../core/api/mensagem-erro';
 import { Pagina } from '../../core/api/pagina';
-import { formatarData, hojeNegocio, primeiroDiaDoMes, ultimoDiaDoMes } from '../../shared/datas/datas';
+import {
+  formatarData,
+  hojeNegocio,
+  primeiroDiaDoMes,
+  ultimoDiaDoMes,
+} from '../../shared/datas/datas';
 import { MoedaPipe } from '../../shared/pipes/moeda-pipe';
 import { Conta } from '../contas/conta.models';
 import { ContasService } from '../contas/contas.service';
 import { DadosEdicao, EditarMovimentacao } from './editar-movimentacao/editar-movimentacao';
-import { DadosEstorno, EstornarMovimentacao, ResultadoEstorno } from './estornar-movimentacao/estornar-movimentacao';
-import { MovimentacoesService } from './movimentacoes.service';
+import {
+  DadosEstorno,
+  EstornarMovimentacao,
+  ResultadoEstorno,
+} from './estornar-movimentacao/estornar-movimentacao';
+import { MovimentacoesService, ResumoConta } from './movimentacoes.service';
 import {
   DadosNovaMovimentacao,
   MovimentacaoRegistrada,
@@ -31,7 +41,15 @@ interface FiltroAplicado {
 
 @Component({
   selector: 'app-movimentacoes',
-  imports: [ReactiveFormsModule, RouterLink, MatFormFieldModule, MatInputModule, MatButtonModule, MoedaPipe],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MoedaPipe,
+  ],
   templateUrl: './movimentacoes.html',
   styleUrl: './movimentacoes.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,6 +80,10 @@ export class Movimentacoes {
   protected readonly estado = signal<'ocioso' | 'carregando' | 'erro' | 'pronto'>('ocioso');
   protected readonly erro = signal<string | null>(null);
   protected readonly resultado = signal<Pagina<Transacao> | null>(null);
+  protected readonly resumo = signal<ResumoConta | null>(null);
+  protected readonly estadoResumo = signal<'carregando' | 'erro' | 'pronto'>('carregando');
+  protected readonly erroResumo = signal<string | null>(null);
+  private consultaResumo = 0;
 
   // Descarta respostas atrasadas: só a consulta mais recente atualiza a tela.
   private consulta = 0;
@@ -108,7 +130,28 @@ export class Movimentacoes {
       return;
     }
     this.aplicado.set({ contaId: Number(conta), inicio, fim });
+    this.carregarResumo();
     this.carregar(0);
+  }
+
+  protected carregarResumo(): void {
+    const filtro = this.aplicado();
+    if (!filtro) return;
+    const minha = ++this.consultaResumo;
+    this.resumo.set(null);
+    this.estadoResumo.set('carregando');
+    this.api.resumo(filtro.contaId, filtro.inicio, filtro.fim).subscribe({
+      next: (resumo) => {
+        if (minha !== this.consultaResumo) return;
+        this.resumo.set(resumo);
+        this.estadoResumo.set('pronto');
+      },
+      error: (erro: unknown) => {
+        if (minha !== this.consultaResumo) return;
+        this.erroResumo.set(mensagemDeErro(erro));
+        this.estadoResumo.set('erro');
+      },
+    });
   }
 
   protected carregar(pagina: number): void {
@@ -150,6 +193,7 @@ export class Movimentacoes {
 
   // Recarrega a MESMA página pela API: o front nunca monta nem altera linhas por conta própria.
   private recarregar(): void {
+    this.carregarResumo();
     this.carregar(this.resultado()?.pagina ?? 0);
   }
 
@@ -183,6 +227,7 @@ export class Movimentacoes {
         ? `Movimentação registrada em ${formatarData(registrada.data)}, fora da conta ou do período exibidos.`
         : 'Movimentação registrada.',
     );
+    this.carregarResumo();
     this.carregar(0);
   }
 

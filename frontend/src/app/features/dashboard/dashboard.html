@@ -12,9 +12,35 @@
       /></label>
       <button type="submit" class="sr-only aplicar">Aplicar período</button>
     </form>
-    <a class="nova" routerLink="/movimentacoes"><mat-icon>add</mat-icon>Nova movimentação</a>
   </div>
 </header>
+<nav class="acessos-rapidos" aria-label="Acessos rápidos">
+  <button
+    type="button"
+    class="atalho receita"
+    [disabled]="estado() !== 'pronto' || contasDisponiveis().length === 0"
+    (click)="registrar('RECEITA')"
+  >
+    <mat-icon aria-hidden="true">south</mat-icon><span>Registrar receita</span>
+  </button>
+  <button
+    type="button"
+    class="atalho despesa"
+    [disabled]="estado() !== 'pronto' || contasDisponiveis().length === 0"
+    (click)="registrar('DESPESA')"
+  >
+    <mat-icon aria-hidden="true">north</mat-icon><span>Registrar despesa</span>
+  </button>
+  <a class="atalho transferir" routerLink="/transferencias"
+    ><mat-icon aria-hidden="true">swap_horiz</mat-icon><span>Transferir</span></a
+  >
+  <a class="atalho orcamentos" routerLink="/orcamentos"
+    ><mat-icon aria-hidden="true">calendar_month</mat-icon><span>Orçamentos</span></a
+  >
+</nav>
+@if (sucesso(); as mensagem) {
+  <p role="status" class="sucesso-atalho">{{ mensagem }}</p>
+}
 @if (erroPeriodo()) {
   <p role="alert" class="erro">{{ erroPeriodo() }}</p>
 }

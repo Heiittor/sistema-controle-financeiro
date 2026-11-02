@@ -1,8 +1,21 @@
-import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
-import { FormGroupDirective, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
+import {
+  FormGroupDirective,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 import { finalize } from 'rxjs';
 import { mensagemDeErro } from '../../core/api/mensagem-erro';
 import { tratarErroDeEnvio } from '../../shared/forms/erros-do-servidor';
@@ -11,7 +24,13 @@ import { CategoriasService } from './categorias.service';
 
 @Component({
   selector: 'app-categorias',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+  ],
   templateUrl: './categorias.html',
   styleUrl: './categorias.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,6 +46,26 @@ export class Categorias {
   protected readonly filtro = signal<TipoCategoria | null>(null);
   protected readonly estado = signal<'carregando' | 'erro' | 'pronto'>('carregando');
   protected readonly erroLista = signal<string | null>(null);
+  protected readonly totalReceitas = computed(
+    () => this.categorias().filter((c) => c.tipo === 'RECEITA').length,
+  );
+  protected readonly totalDespesas = computed(
+    () => this.categorias().filter((c) => c.tipo === 'DESPESA').length,
+  );
+
+  // Ícones apenas ilustrativos: não mudam o tipo nem o contrato de cadastro.
+  protected icone(nome: string): string {
+    const texto = nome
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+    if (/alimenta|almoco|jantar|restaurante/.test(texto)) return 'restaurant';
+    if (/mercado|compra/.test(texto)) return 'shopping_bag';
+    if (/salario|trabalho/.test(texto)) return 'work';
+    if (/transporte|combustivel/.test(texto)) return 'directions_car';
+    if (/moradia|aluguel/.test(texto)) return 'home';
+    return 'label';
+  }
 
   // Validação só orienta o usuário. Quem decide é o backend.
   protected readonly form = inject(NonNullableFormBuilder).group({

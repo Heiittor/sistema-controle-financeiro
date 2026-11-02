@@ -8,7 +8,12 @@ import { API_URL } from '../../core/api/api-url';
 import { Dashboard } from './dashboard';
 import { Grafico } from './grafico';
 import { ChartConfiguration } from 'chart.js';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  NovaMovimentacao,
+  MovimentacaoRegistrada,
+} from '../movimentacoes/nova-movimentacao/nova-movimentacao';
 import { UltimasMovimentacoesService } from './ultimas-movimentacoes.service';
 
 @Component({ selector: 'app-grafico-dashboard', template: '' })
@@ -148,5 +153,64 @@ describe('Dashboard', () => {
     fixture.detectChanges();
     http.expectNone(() => true);
     expect(texto()).toContain('Selecione um mês válido');
+  });
+
+  it('oferece os quatro acessos rápidos e abre o formulário com o tipo escolhido', () => {
+    responder();
+    const abrir = vi
+      .spyOn(TestBed.inject(MatDialog), 'open')
+      .mockReturnValue({ afterClosed: () => of(undefined) } as never);
+    expect(tela().querySelector('.acessos-rapidos a[href="/transferencias"]')).not.toBeNull();
+    expect(tela().querySelector('.acessos-rapidos a[href="/orcamentos"]')).not.toBeNull();
+    tela().querySelector<HTMLButtonElement>('.atalho.receita')!.click();
+    expect(abrir.mock.calls[0][0]).toBe(NovaMovimentacao);
+    expect((abrir.mock.calls[0][1] as { data: unknown }).data).toEqual({
+      contas: [{ id: 1, nome: 'Conta', saldo: 1 }],
+      contaIdInicial: 1,
+      tipoInicial: 'RECEITA',
+    });
+    tela().querySelector<HTMLButtonElement>('.atalho.despesa')!.click();
+    expect((abrir.mock.calls[1][1] as { data: { tipoInicial: string } }).data.tipoInicial).toBe(
+      'DESPESA',
+    );
+    http.expectNone(() => true);
+  });
+
+  it('desabilita lançamentos enquanto carrega ou não há contas e mantém os links de navegação', () => {
+    expect(tela().querySelector<HTMLButtonElement>('.atalho.receita')!.disabled).toBe(true);
+    responder(true);
+    expect(tela().querySelector<HTMLButtonElement>('.atalho.despesa')!.disabled).toBe(true);
+    expect(tela().querySelector('.acessos-rapidos a[href="/transferencias"]')).not.toBeNull();
+  });
+
+  it('não abre dois diálogos e recarrega o painel pela API após salvar fora do período', () => {
+    responder();
+    const fechado = new Subject<MovimentacaoRegistrada | undefined>();
+    const abrir = vi
+      .spyOn(TestBed.inject(MatDialog), 'open')
+      .mockReturnValue({ afterClosed: () => fechado } as never);
+    const receita = tela().querySelector<HTMLButtonElement>('.atalho.receita')!;
+    receita.click();
+    receita.click();
+    expect(abrir).toHaveBeenCalledTimes(1);
+    fechado.next({ contaId: 1, data: '2026-02-10' });
+    fechado.complete();
+    responder();
+    expect(texto()).toContain('fora do período exibido');
+    expect(texto()).toContain('R$ 987,65');
+  });
+
+  it('retoma o mês aplicado para atualizar após registro quando o campo de mês está vazio', () => {
+    responder();
+    const input = tela().querySelector<HTMLInputElement>('input')!;
+    input.value = '';
+    input.dispatchEvent(new Event('input'));
+    vi.spyOn(TestBed.inject(MatDialog), 'open').mockReturnValue({
+      afterClosed: () => of({ contaId: 1, data: '2026-01-20' }),
+    } as never);
+    tela().querySelector<HTMLButtonElement>('.atalho.receita')!.click();
+    responder();
+    expect(texto()).toContain('Movimentação registrada.');
+    expect(input.value).toBe('2026-01');
   });
 });

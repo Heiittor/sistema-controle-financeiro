@@ -6,7 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { API_URL } from '../../core/api/api-url';
 import { Movimentacoes } from './movimentacoes';
 import { MatDialog } from '@angular/material/dialog';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
+import { MovimentacoesService, ResumoConta } from './movimentacoes.service';
 import { NovaMovimentacao } from './nova-movimentacao/nova-movimentacao';
 import { EditarMovimentacao } from './editar-movimentacao/editar-movimentacao';
 import { EstornarMovimentacao } from './estornar-movimentacao/estornar-movimentacao';
@@ -50,11 +51,16 @@ describe('Movimentacoes', () => {
   // O Intl usa espaço não separável entre "R$" e o número. Normalizamos para comparar.
   const texto = () => tela().textContent!.replace(/\s/g, ' ');
   const linhas = () =>
-    Array.from(tela().querySelectorAll('ul.lista li')).map((li) => li.textContent!.replace(/\s/g, ' '));
-  const historico = (contaId = 1) => backend.expectOne((r) => r.url === `${API}/contas/${contaId}/transacoes`);
+    Array.from(tela().querySelectorAll('table.lista tbody tr')).map((li) =>
+      li.textContent!.replace(/\s/g, ' '),
+    );
+  const historico = (contaId = 1) =>
+    backend.expectOne((r) => r.url === `${API}/contas/${contaId}/transacoes`);
 
   function preencher(campo: string, valor: string, evento = 'input'): void {
-    const el = tela().querySelector<HTMLInputElement | HTMLSelectElement>(`[formControlName="${campo}"]`)!;
+    const el = tela().querySelector<HTMLInputElement | HTMLSelectElement>(
+      `[formControlName="${campo}"]`,
+    )!;
     el.value = valor;
     el.dispatchEvent(new Event(evento));
   }
@@ -88,6 +94,15 @@ describe('Movimentacoes', () => {
     });
 
     backend = TestBed.inject(HttpTestingController);
+    vi.spyOn(TestBed.inject(MovimentacoesService), 'resumo').mockReturnValue(
+      of({
+        inicio: '2026-10-01',
+        fim: '2026-10-31',
+        totalReceitas: 80000,
+        totalDespesas: 0,
+        saldoDoPeriodo: 80000,
+      }),
+    );
     fixture = TestBed.createComponent(Movimentacoes);
     fixture.detectChanges();
   });
@@ -95,6 +110,42 @@ describe('Movimentacoes', () => {
   afterEach(() => {
     backend.verify();
     vi.useRealTimers();
+  });
+
+  it('exibe os totais da API, sem somar o histórico paginado, e não recarrega resumo ao paginar', () => {
+    abrirComHistorico(pagina([linha()], { totalElementos: 40, totalPaginas: 2 }));
+    const indicadores = tela().querySelector('.indicadores')!.textContent!.replace(/\s/g, ' ');
+    expect(indicadores).toContain('R$ 80.000,00');
+    expect(indicadores).toContain('Sem despesas no período');
+    const resumo = vi.mocked(TestBed.inject(MovimentacoesService).resumo);
+    expect(resumo).toHaveBeenCalledWith(1, '2026-10-01', '2026-10-31');
+    tela().querySelector<HTMLButtonElement>('button.proxima')!.click();
+    historico().flush(pagina([linha()], { pagina: 1, totalElementos: 40, totalPaginas: 2 }));
+    expect(resumo).toHaveBeenCalledTimes(1);
+  });
+
+  it('descarta resumo antigo e mantém o histórico disponível quando o resumo falha', () => {
+    abrirComHistorico(pagina([linha()]));
+    const antiga = new Subject<ResumoConta>();
+    const nova = new Subject<ResumoConta>();
+    vi.mocked(TestBed.inject(MovimentacoesService).resumo)
+      .mockReturnValueOnce(antiga)
+      .mockReturnValueOnce(nova);
+    preencher('conta', '2', 'change');
+    aplicar();
+    historico(2).flush(pagina([linha({ descricao: 'Conta atual' })]));
+    preencher('inicio', '2026-09-01');
+    aplicar();
+    historico(2).flush(pagina([linha({ descricao: 'Conta atual' })]));
+    nova.error(new Error('Falha no resumo'));
+    antiga.next({ inicio: '', fim: '', totalReceitas: 99, totalDespesas: 0, saldoDoPeriodo: 99 });
+    fixture.detectChanges();
+    expect(tela().querySelector('.indicadores')).toBeNull();
+    expect(texto()).toContain('Conta atual');
+    expect(texto()).toContain('Tentar resumo novamente');
+    tela().querySelector<HTMLButtonElement>('.estado-resumo button')!.click();
+    fixture.detectChanges();
+    expect(tela().querySelector('.indicadores')).not.toBeNull();
   });
 
   it('sem contas, orienta a criar uma e não consulta o histórico', () => {
@@ -215,7 +266,12 @@ describe('Movimentacoes', () => {
     fixture.detectChanges();
 
     historico().flush(
-      { status: 500, mensagem: 'Erro interno. Tente novamente mais tarde.', timestamp: 'x', campos: [] },
+      {
+        status: 500,
+        mensagem: 'Erro interno. Tente novamente mais tarde.',
+        timestamp: 'x',
+        campos: [],
+      },
       { status: 500, statusText: 'erro' },
     );
 
@@ -291,10 +347,12 @@ describe('Movimentacoes', () => {
     historico().flush(pagina([]));
     fixture.detectChanges();
 
-    expect(texto()).toContain('Movimentação registrada em 01/12/2026, fora da conta ou do período exibidos.');
+    expect(texto()).toContain(
+      'Movimentação registrada em 01/12/2026, fora da conta ou do período exibidos.',
+    );
   });
 
-  const itemDaLista = (indice: number) => tela().querySelectorAll('ul.lista li')[indice];
+  const itemDaLista = (indice: number) => tela().querySelectorAll('table.lista tbody tr')[indice];
 
   it('mostra Editar e Estornar só onde a API aceita, e nunca um botão de excluir', () => {
     abrirComHistorico(
@@ -308,7 +366,13 @@ describe('Movimentacoes', () => {
           categoriaNome: null,
           transferenciaId: 'abc',
         }),
-        linha({ id: 4, tipo: 'ESTORNO_DESPESA', categoriaId: null, categoriaNome: null, estornoDeId: 2 }),
+        linha({
+          id: 4,
+          tipo: 'ESTORNO_DESPESA',
+          categoriaId: null,
+          categoriaNome: null,
+          estornoDeId: 2,
+        }),
         linha({ id: 5, tipo: 'RECEITA' }),
       ]),
     );
@@ -341,6 +405,7 @@ describe('Movimentacoes', () => {
 
     expect(texto()).toContain('Estorno registrado com a data de hoje.');
     expect(texto()).toContain('Estornada');
+    expect(TestBed.inject(MovimentacoesService).resumo).toHaveBeenCalledTimes(2);
   });
 
   it('se o diálogo diz que a lista estava desatualizada, recarrega sem avisar sucesso', () => {
@@ -356,7 +421,9 @@ describe('Movimentacoes', () => {
   });
 
   it('depois de editar, avisa e recarrega a MESMA página pela API', () => {
-    abrirComHistorico(pagina([linha({ id: 1 })], { pagina: 1, totalElementos: 45, totalPaginas: 3 }));
+    abrirComHistorico(
+      pagina([linha({ id: 1 })], { pagina: 1, totalElementos: 45, totalPaginas: 3 }),
+    );
     const abrir = abrirDialogoCom(true);
 
     tela().querySelector<HTMLButtonElement>('button.editar')!.click();
@@ -364,7 +431,13 @@ describe('Movimentacoes', () => {
     expect(abrir.mock.calls[0][0]).toBe(EditarMovimentacao);
     const req = historico();
     expect(req.request.params.get('page')).toBe('1');
-    req.flush(pagina([linha({ id: 1, descricao: 'Texto novo' })], { pagina: 1, totalElementos: 45, totalPaginas: 3 }));
+    req.flush(
+      pagina([linha({ id: 1, descricao: 'Texto novo' })], {
+        pagina: 1,
+        totalElementos: 45,
+        totalPaginas: 3,
+      }),
+    );
     fixture.detectChanges();
 
     expect(texto()).toContain('Movimentação atualizada.');

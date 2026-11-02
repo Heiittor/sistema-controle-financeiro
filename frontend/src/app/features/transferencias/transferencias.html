@@ -1,5 +1,9 @@
-<section aria-labelledby="titulo-saldos">
-  <h2 id="titulo-saldos">Saldos</h2>
+<header class="cabecalho">
+  <h1>Transferências</h1>
+  <p>Transfira valores entre suas contas de forma simples e segura.</p>
+</header>
+<section class="painel-saldos" aria-labelledby="titulo-saldos">
+  <h2 id="titulo-saldos"><mat-icon aria-hidden="true">layers</mat-icon>Saldos das contas</h2>
 
   @switch (estadoContas()) {
     @case ('carregando') {
@@ -18,7 +22,11 @@
         <ul class="contas">
           @for (conta of contas(); track conta.id) {
             <li>
-              <span class="nome">{{ conta.nome }}</span>
+              <span class="identidade"
+                ><app-logo-banco [nome]="conta.nome" /><span class="nome">{{
+                  conta.nome
+                }}</span></span
+              >
               <span class="saldo"><small>Saldo</small> {{ conta.saldo | moeda }}</span>
             </li>
           }
@@ -29,101 +37,244 @@
 </section>
 
 @if (estadoContas() === 'pronto') {
-  <section aria-labelledby="titulo-nova">
-    <h2 id="titulo-nova">Nova transferência</h2>
+  <div class="paineis">
+    <section class="nova-transferencia" aria-labelledby="titulo-nova">
+      <header class="titulo-secao">
+        <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+        <div>
+          <h2 id="titulo-nova">Nova transferência</h2>
+          <p>Transfira valores entre suas contas.</p>
+        </div>
+      </header>
 
-    @if (contas().length < 2) {
-      <p class="aviso" role="status">
-        Você precisa de pelo menos duas contas para transferir.
-        <a routerLink="/contas">Crie outra conta</a>.
-      </p>
-    } @else {
-      <form [formGroup]="form" (ngSubmit)="transferir()" novalidate>
-        <mat-form-field appearance="outline">
-          <mat-label>Conta de origem</mat-label>
-          <select matNativeControl formControlName="contaOrigemId">
-            <option value="" disabled>Selecione</option>
-            @for (c of contas(); track c.id) {
-              <option [value]="c.id">{{ c.nome }}</option>
+      @if (contas().length < 2) {
+        <p class="aviso" role="status">
+          Você precisa de pelo menos duas contas para transferir.
+          <a routerLink="/contas">Crie outra conta</a>.
+        </p>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="transferir()" novalidate>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" floatLabel="always">
+            <mat-label>Conta de origem</mat-label>
+            <select matNativeControl formControlName="contaOrigemId">
+              <option value="" disabled>Selecione a conta de origem</option>
+              @for (c of contas(); track c.id) {
+                <option [value]="c.id">{{ c.nome }}</option>
+              }
+            </select>
+            @if (form.controls.contaOrigemId.hasError('required')) {
+              <mat-error>Escolha a conta de origem.</mat-error>
+            } @else if (form.controls.contaOrigemId.hasError('servidor')) {
+              <mat-error>{{ form.controls.contaOrigemId.getError('servidor') }}</mat-error>
             }
-          </select>
-          @if (form.controls.contaOrigemId.hasError('required')) {
-            <mat-error>Escolha a conta de origem.</mat-error>
-          } @else if (form.controls.contaOrigemId.hasError('servidor')) {
-            <mat-error>{{ form.controls.contaOrigemId.getError('servidor') }}</mat-error>
-          }
-        </mat-form-field>
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Conta de destino</mat-label>
-          <select matNativeControl formControlName="contaDestinoId">
-            <option value="" disabled>Selecione</option>
-            @for (c of contas(); track c.id) {
-              <option [value]="c.id">{{ c.nome }}</option>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" floatLabel="always">
+            <mat-label>Conta de destino</mat-label>
+            <select matNativeControl formControlName="contaDestinoId">
+              <option value="" disabled>Selecione a conta de destino</option>
+              @for (c of contas(); track c.id) {
+                <option [value]="c.id">{{ c.nome }}</option>
+              }
+            </select>
+            @if (form.controls.contaDestinoId.hasError('required')) {
+              <mat-error>Escolha a conta de destino.</mat-error>
+            } @else if (form.controls.contaDestinoId.hasError('mesmaConta')) {
+              <mat-error>A conta de destino deve ser diferente da de origem.</mat-error>
+            } @else if (form.controls.contaDestinoId.hasError('servidor')) {
+              <mat-error>{{ form.controls.contaDestinoId.getError('servidor') }}</mat-error>
             }
-          </select>
-          @if (form.controls.contaDestinoId.hasError('required')) {
-            <mat-error>Escolha a conta de destino.</mat-error>
-          } @else if (form.controls.contaDestinoId.hasError('mesmaConta')) {
-            <mat-error>A conta de destino deve ser diferente da de origem.</mat-error>
-          } @else if (form.controls.contaDestinoId.hasError('servidor')) {
-            <mat-error>{{ form.controls.contaDestinoId.getError('servidor') }}</mat-error>
-          }
-        </mat-form-field>
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Descrição</mat-label>
-          <input matInput type="text" formControlName="descricao" autocomplete="off" />
-          @if (form.controls.descricao.hasError('required')) {
-            <mat-error>Informe a descrição.</mat-error>
-          } @else if (form.controls.descricao.hasError('maxlength')) {
-            <mat-error>A descrição deve ter no máximo 255 caracteres.</mat-error>
-          } @else if (form.controls.descricao.hasError('servidor')) {
-            <mat-error>{{ form.controls.descricao.getError('servidor') }}</mat-error>
-          }
-        </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" floatLabel="always">
+            <mat-label>Valor (R$)</mat-label>
+            <input
+              matInput
+              type="text"
+              inputmode="decimal"
+              formControlName="valor"
+              autocomplete="off"
+              placeholder="Ex.: 500,00"
+            />
+            <mat-hint>Ex.: 1.206,35, 1206,35 ou 1206.35. Com milhar, use vírgula decimal.</mat-hint>
+            @if (form.controls.valor.hasError('required')) {
+              <mat-error>Informe o valor.</mat-error>
+            } @else if (form.controls.valor.hasError('formato')) {
+              <mat-error
+                >Use apenas números em formatos como 1.206,35 ou 1206.35, com até 2 casas
+                decimais.</mat-error
+              >
+            } @else if (form.controls.valor.hasError('positivo')) {
+              <mat-error>O valor deve ser maior que zero.</mat-error>
+            } @else if (form.controls.valor.hasError('precisao')) {
+              <mat-error
+                >Este valor não pode ser enviado sem perda de centavos. Informe um valor
+                menor.</mat-error
+              >
+            } @else if (form.controls.valor.hasError('servidor')) {
+              <mat-error>{{ form.controls.valor.getError('servidor') }}</mat-error>
+            }
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Valor (R$)</mat-label>
-          <input matInput type="text" inputmode="decimal" formControlName="valor" autocomplete="off" />
-          <mat-hint>Use vírgula ou ponto, até 2 casas. Sem separador de milhar.</mat-hint>
-          @if (form.controls.valor.hasError('required')) {
-            <mat-error>Informe o valor.</mat-error>
-          } @else if (form.controls.valor.hasError('formato')) {
-            <mat-error>Use apenas números, com vírgula ou ponto e até 2 casas decimais.</mat-error>
-          } @else if (form.controls.valor.hasError('positivo')) {
-            <mat-error>O valor deve ser maior que zero.</mat-error>
-          } @else if (form.controls.valor.hasError('precisao')) {
-            <mat-error>Este valor não pode ser enviado sem perda de centavos. Informe um valor menor.</mat-error>
-          } @else if (form.controls.valor.hasError('servidor')) {
-            <mat-error>{{ form.controls.valor.getError('servidor') }}</mat-error>
-          }
-        </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" floatLabel="always">
+            <mat-label>Descrição</mat-label>
+            <input
+              matInput
+              type="text"
+              formControlName="descricao"
+              autocomplete="off"
+              placeholder="Ex.: Transferência entre contas"
+            />
+            @if (form.controls.descricao.hasError('required')) {
+              <mat-error>Informe a descrição.</mat-error>
+            } @else if (form.controls.descricao.hasError('maxlength')) {
+              <mat-error>A descrição deve ter no máximo 255 caracteres.</mat-error>
+            } @else if (form.controls.descricao.hasError('servidor')) {
+              <mat-error>{{ form.controls.descricao.getError('servidor') }}</mat-error>
+            }
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Data</mat-label>
-          <input matInput type="date" formControlName="data" />
-          @if (form.controls.data.hasError('required')) {
-            <mat-error>Informe a data.</mat-error>
-          } @else if (form.controls.data.hasError('servidor')) {
-            <mat-error>{{ form.controls.data.getError('servidor') }}</mat-error>
-          }
-        </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" floatLabel="always">
+            <mat-label>Data</mat-label>
+            <mat-icon matPrefix aria-hidden="true">calendar_month</mat-icon>
+            <input matInput type="date" formControlName="data" />
+            @if (form.controls.data.hasError('required')) {
+              <mat-error>Informe a data.</mat-error>
+            } @else if (form.controls.data.hasError('servidor')) {
+              <mat-error>{{ form.controls.data.getError('servidor') }}</mat-error>
+            }
+          </mat-form-field>
 
-        @if (erro(); as mensagem) {
-          <p class="erro" role="alert">{{ mensagem }}</p>
+          @if (erro(); as mensagem) {
+            <p class="erro" role="alert">{{ mensagem }}</p>
+          }
+          @if (ultima(); as t) {
+            <p class="aviso sucesso" role="status">
+              Transferência realizada: {{ t.valor | moeda }} de
+              {{ nomeDaConta(t.contaOrigemId) }} para {{ nomeDaConta(t.contaDestinoId) }}, em
+              {{ formatarData(t.data) }}.
+            </p>
+          }
+
+          <button mat-flat-button type="submit" [disabled]="enviando()">
+            <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+            {{ enviando() ? 'Transferindo...' : 'Transferir' }}
+          </button>
+        </form>
+      }
+    </section>
+    <section class="historico-transferencias" aria-labelledby="titulo-historico">
+      <header class="titulo-secao">
+        <mat-icon aria-hidden="true">schedule</mat-icon>
+        <div>
+          <h2 id="titulo-historico">Histórico de transferências</h2>
+          <p>Todas as transferências entre suas contas.</p>
+        </div>
+      </header>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filtro-historico">
+        <mat-label>Filtrar histórico por conta</mat-label>
+        <select
+          matNativeControl
+          [value]="filtroHistorico() ?? ''"
+          (change)="filtrarHistorico($event)"
+        >
+          <option value="">Todas as contas</option>
+          @for (conta of contas(); track conta.id) {
+            <option [value]="conta.id">{{ conta.nome }}</option>
+          }
+        </select>
+      </mat-form-field>
+      @switch (estadoHistorico()) {
+        @case ('carregando') {
+          <p class="estado-historico" role="status">Carregando histórico de transferências...</p>
         }
-        @if (ultima(); as t) {
-          <p class="aviso sucesso" role="status">
-            Transferência realizada: {{ t.valor | moeda }} de {{ nomeDaConta(t.contaOrigemId) }} para
-            {{ nomeDaConta(t.contaDestinoId) }}, em {{ formatarData(t.data) }}.
-          </p>
+        @case ('erro') {
+          <p class="erro" role="alert">{{ erroHistorico() }}</p>
+          <button
+            mat-stroked-button
+            type="button"
+            class="tentar-historico"
+            (click)="carregarHistorico()"
+          >
+            Tentar histórico novamente
+          </button>
         }
-
-        <button mat-flat-button type="submit" [disabled]="enviando()">
-          {{ enviando() ? 'Transferindo...' : 'Transferir' }}
-        </button>
-      </form>
-    }
-  </section>
+        @case ('pronto') {
+          @if (historico(); as h) {
+            @if (h.conteudo.length === 0) {
+              <p class="estado-historico">
+                {{
+                  h.totalElementos === 0
+                    ? 'Nenhuma transferência encontrada.'
+                    : 'Nenhuma transferência nesta página.'
+                }}
+              </p>
+            } @else {
+              <ul class="historico-lista">
+                @for (t of h.conteudo; track t.transferenciaId) {
+                  <li class="transferencia">
+                    <span class="icone-transferencia"
+                      ><mat-icon aria-hidden="true">swap_horiz</mat-icon></span
+                    >
+                    <div class="detalhes">
+                      <h3>
+                        {{ t.contaOrigemNome }} <span aria-label="para">→</span>
+                        {{ t.contaDestinoNome }}
+                      </h3>
+                      <p>{{ formatarData(t.data) }}</p>
+                      <p class="descricao">{{ t.descricao }}</p>
+                    </div>
+                    <strong class="valor-transferencia">{{ t.valor | moeda }}</strong>
+                    <span class="concluida"
+                      ><mat-icon aria-hidden="true">check</mat-icon>Concluída</span
+                    >
+                  </li>
+                }
+              </ul>
+            }
+            @if (h.totalElementos > 0) {
+              <nav
+                class="paginacao-historico"
+                aria-label="Paginação do histórico de transferências"
+              >
+                <span role="status"
+                  >Página {{ h.pagina + 1 }} de {{ h.totalPaginas }} ·
+                  {{
+                    h.totalElementos === 1
+                      ? '1 transferência'
+                      : h.totalElementos + ' transferências'
+                  }}</span
+                >
+                <button
+                  mat-stroked-button
+                  type="button"
+                  class="anterior-historico"
+                  [disabled]="h.pagina === 0"
+                  (click)="carregarHistorico(h.pagina - 1)"
+                >
+                  <mat-icon aria-hidden="true">chevron_left</mat-icon>Anterior
+                </button>
+                <button
+                  mat-stroked-button
+                  type="button"
+                  class="proxima-historico"
+                  [disabled]="h.pagina + 1 >= h.totalPaginas"
+                  (click)="carregarHistorico(h.pagina + 1)"
+                >
+                  Próxima<mat-icon iconPositionEnd aria-hidden="true">chevron_right</mat-icon>
+                </button>
+              </nav>
+            }
+          }
+        }
+      }
+      <a mat-stroked-button class="ver-movimentacoes" routerLink="/movimentacoes"
+        ><mat-icon aria-hidden="true">list</mat-icon>Ver movimentações<mat-icon
+          iconPositionEnd
+          aria-hidden="true"
+          >chevron_right</mat-icon
+        ></a
+      >
+    </section>
+  </div>
 }

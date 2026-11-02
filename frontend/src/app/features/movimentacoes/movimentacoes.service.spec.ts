@@ -13,7 +13,11 @@ describe('MovimentacoesService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: API }],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: API_URL, useValue: API },
+      ],
     });
     service = TestBed.inject(MovimentacoesService);
     backend = TestBed.inject(HttpTestingController);
@@ -21,8 +25,25 @@ describe('MovimentacoesService', () => {
 
   afterEach(() => backend.verify());
 
+  it('consulta o resumo existente da conta com o período explícito', () => {
+    service.resumo(7, '2026-10-01', '2026-10-31').subscribe();
+    const req = backend.expectOne((r) => r.url === `${API}/contas/7/resumo`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('inicio')).toBe('2026-10-01');
+    expect(req.request.params.get('fim')).toBe('2026-10-31');
+    req.flush({
+      inicio: '2026-10-01',
+      fim: '2026-10-31',
+      totalReceitas: 0,
+      totalDespesas: 0,
+      saldoDoPeriodo: 0,
+    });
+  });
+
   it('consulta a conta com período e paginação explícitos', () => {
-    service.listar(7, { inicio: '2026-10-01', fim: '2026-10-31', pagina: 2, tamanho: 20 }).subscribe();
+    service
+      .listar(7, { inicio: '2026-10-01', fim: '2026-10-31', pagina: 2, tamanho: 20 })
+      .subscribe();
 
     const req = backend.expectOne((r) => r.url === `${API}/contas/7/transacoes`);
     expect(req.request.method).toBe('GET');
@@ -77,7 +98,12 @@ describe('MovimentacoesService', () => {
 
   it('registrar uma despesa usa a rota de despesas', () => {
     service
-      .registrar(7, 'DESPESA', { categoriaId: 4, descricao: 'Mercado', valor: 20, data: '2026-10-05' })
+      .registrar(7, 'DESPESA', {
+        categoriaId: 4,
+        descricao: 'Mercado',
+        valor: 20,
+        data: '2026-10-05',
+      })
       .subscribe();
 
     const req = backend.expectOne(`${API}/contas/7/despesas`);
