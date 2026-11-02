@@ -4,5 +4,6 @@ public enum EntidadeAuditada {
     USUARIO,
     CONTA,
     CATEGORIA,
-    TRANSACAO
+    TRANSACAO,
+    ORCAMENTO
 }

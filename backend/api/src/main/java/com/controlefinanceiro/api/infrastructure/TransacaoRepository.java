@@ -17,6 +17,48 @@ import java.util.Optional;
 // IMPORTANTE: sem findById nem findAll. Toda leitura passa pelo dono da conta.
 public interface TransacaoRepository extends Repository<Transacao, Long> {
 
+    // Projeção escalar: nenhuma entidade lazy é carregada por linha (sem N+1).
+    // O UUID já tem índice. Cada par gera uma única linha, partindo da saída.
+    @Query(value = """
+            select s.transferenciaId as transferenciaId,
+                   origem.id as contaOrigemId, origem.nome as contaOrigemNome,
+                   destino.id as contaDestinoId, destino.nome as contaDestinoNome,
+                   s.descricao as descricao, s.valor.valor as valor, s.data as data
+            from Transacao s
+            join Transacao e on e.transferenciaId = s.transferenciaId
+            join s.conta origem
+            join e.conta destino
+            where s.tipo = com.controlefinanceiro.api.domain.TipoTransacao.TRANSFERENCIA_SAIDA
+              and e.tipo = com.controlefinanceiro.api.domain.TipoTransacao.TRANSFERENCIA_ENTRADA
+              and origem.usuario.id = :usuarioId and destino.usuario.id = :usuarioId
+              and (:contaId is null or origem.id = :contaId or destino.id = :contaId)
+            order by s.data desc, s.id desc
+            """, countQuery = """
+            select count(s.id)
+            from Transacao s
+            join Transacao e on e.transferenciaId = s.transferenciaId
+            join s.conta origem
+            join e.conta destino
+            where s.tipo = com.controlefinanceiro.api.domain.TipoTransacao.TRANSFERENCIA_SAIDA
+              and e.tipo = com.controlefinanceiro.api.domain.TipoTransacao.TRANSFERENCIA_ENTRADA
+              and origem.usuario.id = :usuarioId and destino.usuario.id = :usuarioId
+              and (:contaId is null or origem.id = :contaId or destino.id = :contaId)
+            """)
+    Page<TransferenciaHistorico> historicoTransferencias(@Param("usuarioId") Long usuarioId,
+                                                       @Param("contaId") Long contaId,
+                                                       Pageable pageable);
+
+    interface TransferenciaHistorico {
+        java.util.UUID getTransferenciaId();
+        Long getContaOrigemId();
+        String getContaOrigemNome();
+        Long getContaDestinoId();
+        String getContaDestinoNome();
+        String getDescricao();
+        BigDecimal getValor();
+        LocalDate getData();
+    }
+
     // Só grava o que a Conta já criou e validou. Nunca crie Transacao por fora da Conta.
     Transacao save(Transacao transacao);
 
