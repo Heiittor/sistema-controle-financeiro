@@ -1,5 +1,5 @@
 # ---------- Estágio 1: compilar ----------
-FROM eclipse-temurin:24-jdk AS build
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /app
 
 # Copia só o que define dependências primeiro: o Docker reaproveita essa camada em cache.
@@ -11,7 +11,7 @@ COPY src/ src/
 RUN ./mvnw -B -DskipTests package
 
 # ---------- Estágio 2: rodar ----------
-FROM eclipse-temurin:24-jre
+FROM eclipse-temurin:25-jre
 WORKDIR /app
 
 # IMPORTANTE: usuário sem privilégios. Se a aplicação for explorada, o estrago é limitado.
