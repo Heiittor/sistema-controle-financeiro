@@ -14,6 +14,7 @@ import { OrcamentosService } from './orcamentos.service';
 
 @Component({
   selector: 'app-orcamentos',
+  host: { class: 'app-tela-financeira app-feedback' },
   imports: [MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MoedaPipe],
   templateUrl: './orcamentos.html',
   styleUrl: './orcamentos.scss',

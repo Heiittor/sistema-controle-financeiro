@@ -82,12 +82,14 @@
     }
     @case ('pronto') {
       @if (resumo(); as r) {
-        <dl class="indicadores" aria-label="Resumo da conta no período aplicado">
+        <div role="group" class="indicadores" aria-label="Resumo da conta no período aplicado">
           <div class="indicador receitas">
             <span class="icone-indicador"><mat-icon aria-hidden="true">south</mat-icon></span>
             <div>
-              <dt>Receitas no período</dt>
-              <dd>{{ r.totalReceitas | moeda }}</dd>
+              <dl>
+                <dt>Receitas no período</dt>
+                <dd>{{ r.totalReceitas | moeda }}</dd>
+              </dl>
               <small>{{
                 r.totalReceitas === 0
                   ? 'Sem receitas no período'
@@ -98,8 +100,10 @@
           <div class="indicador despesas">
             <span class="icone-indicador"><mat-icon aria-hidden="true">north</mat-icon></span>
             <div>
-              <dt>Despesas no período</dt>
-              <dd>{{ r.totalDespesas | moeda }}</dd>
+              <dl>
+                <dt>Despesas no período</dt>
+                <dd>{{ r.totalDespesas | moeda }}</dd>
+              </dl>
               <small>{{
                 r.totalDespesas === 0
                   ? 'Sem despesas no período'
@@ -110,14 +114,16 @@
           <div class="indicador saldo">
             <span class="icone-indicador"><mat-icon aria-hidden="true">layers</mat-icon></span>
             <div>
-              <dt>Saldo do período</dt>
-              <dd [class.entrada]="r.saldoDoPeriodo >= 0" [class.saida]="r.saldoDoPeriodo < 0">
-                {{ r.saldoDoPeriodo > 0 ? '+ ' : '' }}{{ r.saldoDoPeriodo | moeda }}
-              </dd>
+              <dl>
+                <dt>Saldo do período</dt>
+                <dd [class.entrada]="r.saldoDoPeriodo >= 0" [class.saida]="r.saldoDoPeriodo < 0">
+                  {{ r.saldoDoPeriodo > 0 ? '+ ' : '' }}{{ r.saldoDoPeriodo | moeda }}
+                </dd>
+              </dl>
               <small>Resultado do período nesta conta</small>
             </div>
           </div>
-        </dl>
+        </div>
       }
     }
   }

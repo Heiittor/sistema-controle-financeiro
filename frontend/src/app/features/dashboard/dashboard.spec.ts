@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
@@ -7,6 +8,7 @@ import { beforeEach, afterEach, it, expect, describe, vi } from 'vitest';
 import { API_URL } from '../../core/api/api-url';
 import { Dashboard } from './dashboard';
 import { Grafico } from './grafico';
+import { GraficosPainel } from './graficos-painel';
 import { ChartConfiguration } from 'chart.js';
 import { of, Subject } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
@@ -73,10 +75,15 @@ describe('Dashboard', () => {
         { provide: API_URL, useValue: 'http://api' },
         { provide: UltimasMovimentacoesService, useValue: { listar: () => of([]) } },
       ],
-    }).overrideComponent(Dashboard, {
-      remove: { imports: [Grafico] },
-      add: { imports: [GraficoTeste] },
-    });
+    })
+      .overrideComponent(Dashboard, {
+        remove: { imports: [Grafico] },
+        add: { imports: [GraficoTeste] },
+      })
+      .overrideComponent(GraficosPainel, {
+        remove: { imports: [Grafico] },
+        add: { imports: [GraficoTeste] },
+      });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(Dashboard);
     fixture.detectChanges();
@@ -112,9 +119,15 @@ describe('Dashboard', () => {
     botao.click();
     fixture.detectChanges();
     expect(botao.getAttribute('aria-pressed')).toBe('true');
+    const rosca = fixture.debugElement
+      .queryAll(By.directive(GraficoTeste))
+      .map((elemento) => elemento.componentInstance as GraficoTeste)
+      .find((grafico) => grafico.configuracao.type === 'doughnut')!;
+    expect(rosca.destaque).toBe(0);
     botao.click();
     fixture.detectChanges();
     expect(botao.getAttribute('aria-pressed')).toBe('false');
+    expect(rosca.destaque).toBeNull();
   });
   it('mostra falha sem números antigos e permite nova consulta', () => {
     const pendentes = http.match(() => true);

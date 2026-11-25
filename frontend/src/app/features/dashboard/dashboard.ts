@@ -15,9 +15,11 @@ import { ContasService } from '../contas/contas.service';
 import { DashboardService } from './dashboard.service';
 import { ResumoDashboard, MesDashboard } from './dashboard.models';
 import { Grafico } from './grafico';
+import { GraficosPainel } from './graficos-painel';
+import { AcessosRapidos } from './acessos-rapidos';
 import { ValorAnimado } from './valor-animado';
-import { graficoLinha, graficoRosca, CORES_CATEGORIAS } from './graficos-dashboard';
-import { periodoDashboard, rotuloMes } from './periodo-dashboard';
+import { graficoLinha, graficoRosca } from './graficos-dashboard';
+import { periodoDashboard } from './periodo-dashboard';
 import { UltimasMovimentacoesService } from './ultimas-movimentacoes.service';
 import { Transacao, INFO_TIPO } from '../movimentacoes/transacao.models';
 import { minigrafico } from './painel-graficos';
@@ -31,6 +33,7 @@ import {
 
 @Component({
   selector: 'app-dashboard',
+  host: { class: 'app-tela-financeira' },
   imports: [
     ReactiveFormsModule,
     RouterLink,
@@ -39,6 +42,8 @@ import {
     MatInputModule,
     MoedaPipe,
     Grafico,
+    GraficosPainel,
+    AcessosRapidos,
     ValorAnimado,
     MatIconModule,
   ],
@@ -78,17 +83,7 @@ export class Dashboard {
     miniDespesas: ReturnType<typeof minigrafico>;
   } | null>(null);
   protected readonly selecionada = signal<number | null>(null);
-  protected readonly cores = CORES_CATEGORIAS;
-  protected readonly rotuloMes = rotuloMes;
   protected readonly formatarData = formatarData;
-  protected participacao(valor: number, total: number): string {
-    // Proporção visual da rosca, sem alterar ou agregar valores financeiros.
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'percent',
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    }).format(total > 0 ? valor / total : 0);
-  }
 
   constructor() {
     this.carregar();

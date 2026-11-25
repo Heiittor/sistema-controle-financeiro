@@ -14,30 +14,13 @@
     </form>
   </div>
 </header>
-<nav class="acessos-rapidos" aria-label="Acessos rápidos">
-  <button
-    type="button"
-    class="atalho receita"
-    [disabled]="estado() !== 'pronto' || contasDisponiveis().length === 0"
-    (click)="registrar('RECEITA')"
-  >
-    <mat-icon aria-hidden="true">south</mat-icon><span>Registrar receita</span>
-  </button>
-  <button
-    type="button"
-    class="atalho despesa"
-    [disabled]="estado() !== 'pronto' || contasDisponiveis().length === 0"
-    (click)="registrar('DESPESA')"
-  >
-    <mat-icon aria-hidden="true">north</mat-icon><span>Registrar despesa</span>
-  </button>
-  <a class="atalho transferir" routerLink="/transferencias"
-    ><mat-icon aria-hidden="true">swap_horiz</mat-icon><span>Transferir</span></a
-  >
-  <a class="atalho orcamentos" routerLink="/orcamentos"
-    ><mat-icon aria-hidden="true">calendar_month</mat-icon><span>Orçamentos</span></a
-  >
-</nav>
+<nav
+  class="acessos-rapidos"
+  appAcessosRapidos
+  aria-label="Acessos rápidos"
+  [habilitado]="estado() === 'pronto' && contasDisponiveis().length > 0"
+  (registrar)="registrar($event)"
+></nav>
 @if (sucesso(); as mensagem) {
   <p role="status" class="sucesso-atalho">{{ mensagem }}</p>
 }
@@ -56,7 +39,7 @@
     @if (dados(); as d) {
       @if (d.semContas) {
         <section class="vazio">
-          <h3>Comece pela sua primeira conta</h3>
+          <h2>Comece pela sua primeira conta</h2>
           <p>Crie uma conta para registrar receitas, despesas e acompanhar seu dinheiro.</p>
           <a mat-flat-button routerLink="/contas">Criar conta</a>
         </section>
@@ -64,21 +47,25 @@
         <p class="sr-only">
           Período: {{ formatarData(d.resumo.inicio) }} a {{ formatarData(d.resumo.fim) }}
         </p>
-        <dl class="indicadores">
+        <div role="group" class="indicadores" aria-label="Indicadores">
           <div class="indicador saldo">
-            <dt>
-              <span class="icone-card"><mat-icon>account_balance_wallet</mat-icon></span
-              >Saldo total
-            </dt>
-            <dd><app-valor-animado [valor]="d.resumo.saldoTotal" /></dd>
+            <dl>
+              <dt>
+                <span class="icone-card"><mat-icon>account_balance_wallet</mat-icon></span
+                >Saldo total
+              </dt>
+              <dd><app-valor-animado [valor]="d.resumo.saldoTotal" /></dd>
+            </dl>
             <small>Saldos atuais de todas as contas</small>
           </div>
           <div class="indicador receita">
-            <dt>
-              <span class="icone-card"><mat-icon>south</mat-icon></span
-              >Receitas
-            </dt>
-            <dd><app-valor-animado [valor]="d.resumo.totalReceitas" /></dd>
+            <dl>
+              <dt>
+                <span class="icone-card"><mat-icon>south</mat-icon></span
+                >Receitas
+              </dt>
+              <dd><app-valor-animado [valor]="d.resumo.totalReceitas" /></dd>
+            </dl>
             <small>No mês selecionado</small
             ><app-grafico-dashboard
               class="mini"
@@ -88,11 +75,13 @@
             />
           </div>
           <div class="indicador despesa">
-            <dt>
-              <span class="icone-card"><mat-icon>north</mat-icon></span
-              >Despesas
-            </dt>
-            <dd><app-valor-animado [valor]="d.resumo.totalDespesas" /></dd>
+            <dl>
+              <dt>
+                <span class="icone-card"><mat-icon>north</mat-icon></span
+                >Despesas
+              </dt>
+              <dd><app-valor-animado [valor]="d.resumo.totalDespesas" /></dd>
+            </dl>
             <small>No mês selecionado</small
             ><app-grafico-dashboard
               class="mini"
@@ -102,115 +91,30 @@
             />
           </div>
           <div class="indicador economia">
-            <dt>
-              <span class="icone-card"><mat-icon>savings</mat-icon></span
-              >Economia do mês
-            </dt>
-            <dd><app-valor-animado [valor]="d.resumo.saldoDoPeriodo" /></dd>
+            <dl>
+              <dt>
+                <span class="icone-card"><mat-icon>savings</mat-icon></span
+                >Economia do mês
+              </dt>
+              <dd><app-valor-animado [valor]="d.resumo.saldoDoPeriodo" /></dd>
+            </dl>
             <small>Resultado do mês: receitas menos despesas</small>
           </div>
-        </dl>
+        </div>
         @if (d.resumo.totalReceitas === 0 && d.resumo.totalDespesas === 0) {
           <p role="status">Nenhuma receita ou despesa não estornada neste período.</p>
         }
-        <div class="graficos">
-          <section class="cartao evolucao" aria-labelledby="titulo-evolucao">
-            <div class="titulo-grafico">
-              <h3 id="titulo-evolucao"><mat-icon>bar_chart</mat-icon>Receitas x despesas</h3>
-              <div class="chaves">
-                <span><i class="azul"></i>Receitas</span
-                ><span><i class="vermelho"></i>Despesas</span>
-              </div>
-            </div>
-            <app-grafico-dashboard
-              [configuracao]="d.linha"
-              [altura]="230"
-              descricao="Evolução mensal de receitas e despesas. Os valores estão na tabela abaixo."
-            />
-            <div class="dados-mensais">
-              <p class="sr-only">
-                {{ formatarData(d.inicioSerie) }} a {{ formatarData(d.fimSerie) }}
-              </p>
-              <details>
-                <summary>Ver valores por mês</summary>
-                <div class="tabela">
-                  <table>
-                    <caption>
-                      Receitas e despesas mensais
-                    </caption>
-                    <thead>
-                      <tr>
-                        <th scope="col">Mês</th>
-                        <th scope="col">Receitas</th>
-                        <th scope="col">Despesas</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (mes of d.serie; track mes.mes) {
-                        <tr>
-                          <th scope="row">{{ rotuloMes(mes.mes) }}</th>
-                          <td>{{ mes.receitas | moeda }}</td>
-                          <td>{{ mes.despesas | moeda }}</td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              </details>
-            </div>
-          </section>
-          <section class="cartao categorias" aria-labelledby="titulo-categorias">
-            <h3 id="titulo-categorias"><mat-icon>pie_chart</mat-icon>Despesas por categoria</h3>
-            @if (d.resumo.porCategoria.length === 0) {
-              <p class="vazio">Nenhuma despesa não estornada neste período.</p>
-            } @else {
-              <div class="distribuicao">
-                <div class="rosca">
-                  <app-grafico-dashboard
-                    [configuracao]="d.rosca"
-                    [altura]="240"
-                    [destaque]="selecionada()"
-                    descricao="Distribuição das despesas. Categorias e valores estão na legenda ao lado."
-                  />
-                  <div class="centro-rosca" aria-hidden="true">
-                    <strong>{{ d.resumo.totalDespesas | moeda }}</strong
-                    ><span>Total</span>
-                  </div>
-                </div>
-                <ul class="legenda" aria-label="Valores por categoria; selecione para destacar">
-                  @for (
-                    categoria of d.resumo.porCategoria;
-                    track categoria.categoriaId;
-                    let i = $index
-                  ) {
-                    <li>
-                      <button
-                        type="button"
-                        [attr.aria-pressed]="selecionada() === i"
-                        (click)="selecionada.set(selecionada() === i ? null : i)"
-                      >
-                        <i
-                          class="cor"
-                          aria-hidden="true"
-                          [style.background]="cores[i % cores.length]"
-                        ></i
-                        ><span>{{ categoria.categoriaNome }}</span
-                        ><strong
-                          [attr.title]="categoria.total | moeda"
-                          [attr.aria-label]="categoria.total | moeda"
-                          >{{ participacao(categoria.total, d.resumo.totalDespesas) }}</strong
-                        >
-                      </button>
-                    </li>
-                  }
-                </ul>
-              </div>
-            }
-          </section>
-        </div>
+        <div
+          class="graficos"
+          appGraficosPainel
+          [dados]="d"
+          [selecionada]="selecionada()"
+          (selecionar)="selecionada.set($event)"
+        ></div>
+
         <section class="cartao movimentacoes" aria-labelledby="titulo-ultimas">
           <header>
-            <h3 id="titulo-ultimas"><mat-icon>history</mat-icon>Últimas movimentações</h3>
+            <h2 id="titulo-ultimas"><mat-icon>history</mat-icon>Últimas movimentações</h2>
             <a routerLink="/movimentacoes">Ver todas <mat-icon>arrow_forward</mat-icon></a>
           </header>
           @switch (estadoHistorico()) {
@@ -227,7 +131,12 @@
               @if (ultimas().length === 0) {
                 <p class="vazio">Nenhuma movimentação no mês selecionado.</p>
               } @else {
-                <div class="tabela">
+                <div
+                  class="tabela"
+                  tabindex="0"
+                  role="region"
+                  aria-label="Tabela das últimas movimentações"
+                >
                   <table>
                     <caption class="sr-only">
                       Quatro movimentações mais recentes no mês selecionado

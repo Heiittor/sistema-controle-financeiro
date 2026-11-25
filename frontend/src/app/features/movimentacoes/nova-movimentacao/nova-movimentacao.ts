@@ -30,6 +30,7 @@ export interface MovimentacaoRegistrada {
 
 @Component({
   selector: 'app-nova-movimentacao',
+  host: { class: 'app-feedback' },
   imports: [
     ReactiveFormsModule,
     RouterLink,

@@ -72,9 +72,41 @@ Depois de uma mutação, as listas são consultadas novamente na API.
 Na pasta `frontend`:
 
 ```sh
+npm run lint
 npm test -- --no-watch
 npm run build
 ```
+
+O ESLint verifica todos os arquivos TypeScript (incluindo testes) e templates HTML em `src`.
+A configuração em `eslint.config.mjs` usa as regras recomendadas do TypeScript e do Angular,
+processa templates inline e inclui as regras de acessibilidade dos templates.
+No código da aplicação, também verifica Promises sem tratamento, uso indevido de callbacks
+assíncronos e `await` em valores que não são Promises, usando os tipos do projeto.
+Avisos fazem o comando falhar (`--max-warnings=0`); não são aplicadas correções automáticas.
+Essas verificações não substituem a revisão de contraste, foco ou integração no navegador.
+
+Para consultar vulnerabilidades conhecidas nas dependências, incluindo as ferramentas de desenvolvimento:
+
+```sh
+npm audit
+```
+
+A auditoria completa inclui o servidor de desenvolvimento e os validadores usados pelo build.
+Uma auditoria com `--omit=dev` exclui essas ferramentas e, sozinha, não verifica todas as dependências do projeto.
+
+O `package.json` contém `overrides` de segurança para Vite `8.3.5`, usado pelo Angular Build,
+e `fast-uri` `3.1.9`, usado pelo AJV `8.20.0`. Eles corrigem os alertas de
+[Vite/launch-editor](https://github.com/advisories/GHSA-587h-7wmj-h5pm) e
+[fast-uri](https://github.com/advisories/GHSA-w74x-v6f9-j3xg), preservando as versões atuais do Angular.
+Ao atualizar o Angular Build ou o AJV, revise esses overrides: remova-os quando a árvore original
+já resolver versões corrigidas e confirme novamente `npm ci`, `npm ls --all`, `npm audit`, testes e build.
+
+As ferramentas de lint também usam um override restrito às versões vulneráveis do `minimatch`
+(`>=7.0.0 <11.0.1`), resolvendo `11.0.5` para corrigir
+[GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
+Esse override atravessa uma versão major da dependência transitiva; sua compatibilidade deve
+ser conferida com lint, testes e build. Revise-o ao atualizar ESLint, typescript-eslint ou
+angular-eslint e remova-o quando essas ferramentas resolverem versões corrigidas por conta própria.
 
 Os testes usam Vitest, jsdom e `HttpTestingController`. Para executar somente uma área:
 
@@ -82,10 +114,13 @@ Os testes usam Vitest, jsdom e `HttpTestingController`. Para executar somente um
 npm test -- --no-watch --include=src/app/features/categorias/categorias.spec.ts
 ```
 
-O build de produção é gerado em `dist/frontend`. A CI executa instalação pelo lockfile, testes e build do frontend, além da suíte backend.
-Ainda não há suíte E2E nem ESLint configurado. Testes em jsdom não comprovam layout, contraste ou integração real no navegador.
+O build de produção é gerado em `dist/frontend`. A CI executa instalação pelo lockfile, lint, testes e build do frontend, além da suíte backend.
+Ainda não há suíte E2E configurada. Testes em jsdom não comprovam layout, contraste ou integração real no navegador.
 
 ## Conferência manual antes da entrega
+
+Consulte o [registro de validação e pendências de fechamento](docs/FECHAMENTO_VALIDACAO.md)
+para os resultados verificados e os limites da revisão de acessibilidade.
 
 - Verificar menu aberto/recolhido em desktop e menu sobreposto em celular (por exemplo, 1440, 900 e 360 px), sem transbordamento horizontal.
 - Navegar com Tab, usar “Pular para o conteúdo”, abrir/fechar menu e diálogos, verificar foco e leitura dos rótulos.
@@ -102,3 +137,11 @@ Ainda não há suíte E2E nem ESLint configurado. Testes em jsdom não comprovam
 - `shared`: formulários, datas, moeda, estilos e componentes comuns.
 
 O projeto usa componentes standalone, Signals, `OnPush` e Reactive Forms. Preserve os contratos reais da API e o fluxo de trabalho documentado: alterações backend exigem aprovação prévia.
+
+Os estilos comuns de mensagens, autenticação e telas financeiras são emitidos uma única vez
+em `src/styles.scss`, pelos mixins de `shared/estilos` e `features/auth/_auth-visual.scss`.
+As classes de host `app-feedback`, `app-auth` e `app-tela-financeira` delimitam sua aplicação.
+Mantenha os estilos específicos nos componentes e os tokens do Material nos mixins compartilhados.
+Menu lateral, gráficos do painel e acessos rápidos têm componentes de apresentação próprios;
+os componentes de tela continuam responsáveis pelos dados e pelas ações.
+Os limites de CSS por componente permanecem em 4 kB para aviso e 8 kB para erro.

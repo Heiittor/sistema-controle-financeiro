@@ -1,0 +1,339 @@
+@use '@angular/material' as mat;
+
+// Tokens Material compartilhados; cada combinação preserva o tema da respectiva tela.
+@mixin tema() {
+  // O painel e seus gráficos compartilham o mesmo foco visível.
+  .app-tela-financeira:where(app-dashboard) {
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    summary:focus-visible,
+    .tabela:focus-visible {
+      outline: 3px solid #5785ff;
+      outline-offset: 3px;
+    }
+    .tabela:focus-visible {
+      // Mantém o contorno dentro dos cards que recortam o conteúdo.
+      outline-offset: -3px;
+    }
+  }
+  .app-tela-financeira:where(app-contas) mat-form-field {
+    @include mat.form-field-overrides(
+      (
+        outlined-container-shape: 15px,
+        outlined-outline-color: #bec9e1,
+        outlined-focus-outline-width: 2px,
+        outlined-hover-outline-color: #8daddf,
+        outlined-input-text-color: #0b123c,
+        outlined-input-text-placeholder-color: #66759b,
+      )
+    );
+  }
+  .app-tela-financeira:where(
+      app-contas,
+      app-categorias,
+      app-transferencias,
+      app-movimentacoes,
+      app-orcamentos
+    )
+    mat-form-field {
+    @include mat.form-field-overrides(
+      (
+        outlined-focus-outline-color: #0056ff,
+        container-height: 48px,
+        container-vertical-padding: 11px,
+      )
+    );
+  }
+  .app-tela-financeira:where(app-categorias, app-transferencias, app-movimentacoes) mat-form-field {
+    @include mat.form-field-overrides(
+      (
+        outlined-container-shape: 8px,
+        outlined-label-text-weight: 600,
+      )
+    );
+  }
+  .app-tela-financeira:where(app-categorias) mat-form-field {
+    @include mat.form-field-overrides(
+      (
+        outlined-outline-color: #bdc8e1,
+        outlined-label-text-color: #14234c,
+      )
+    );
+  }
+  .app-tela-financeira:where(app-categorias, app-movimentacoes) mat-form-field {
+    @include mat.form-field-overrides(
+      (
+        container-text-weight: 600,
+      )
+    );
+  }
+  .app-tela-financeira:where(app-transferencias, app-movimentacoes) mat-form-field {
+    @include mat.form-field-overrides(
+      (
+        outlined-outline-color: #b9c4df,
+      )
+    );
+  }
+  .app-tela-financeira:where(app-transferencias) mat-form-field {
+    @include mat.form-field-overrides(
+      (
+        outlined-label-text-color: #0b183f,
+      )
+    );
+  }
+  .app-tela-financeira:where(app-movimentacoes) mat-form-field {
+    @include mat.form-field-overrides(
+      (
+        outlined-label-text-color: #090e37,
+      )
+    );
+  }
+  .app-tela-financeira:where(app-orcamentos) mat-form-field {
+    @include mat.form-field-overrides(
+      (
+        outlined-container-shape: 12px,
+        outlined-outline-color: #c4d1ee,
+      )
+    );
+  }
+
+  .app-tela-financeira:where(
+      app-contas,
+      app-categorias,
+      app-transferencias,
+      app-movimentacoes,
+      app-orcamentos,
+      app-dashboard
+    )
+    h1 {
+    font-size: 40px;
+    line-height: 1.2;
+    font-weight: 750;
+    letter-spacing: -1px;
+  }
+  @media (max-width: 1000px) {
+    .app-tela-financeira:where(
+        app-contas,
+        app-categorias,
+        app-transferencias,
+        app-movimentacoes,
+        app-orcamentos,
+        app-dashboard
+      )
+      h1 {
+      font-size: 32px;
+    }
+  }
+
+  // Tipografia e superfícies iguais entre telas, emitidas apenas uma vez.
+  .app-tela-financeira:where(
+      app-categorias,
+      app-contas,
+      app-movimentacoes,
+      app-orcamentos,
+      app-transferencias
+    )
+    p {
+    margin: 0;
+  }
+  .app-tela-financeira:where(app-contas, app-transferencias) section {
+    padding: 24px;
+  }
+  .app-tela-financeira:where(app-categorias, app-contas, app-movimentacoes, app-transferencias)
+    section {
+    min-width: 0;
+  }
+  .app-tela-financeira:where(
+      app-categorias,
+      app-contas,
+      app-movimentacoes,
+      app-orcamentos,
+      app-transferencias
+    )
+    .titulo-secao {
+    display: flex;
+  }
+  .app-tela-financeira:where(app-categorias, app-contas, app-movimentacoes) .titulo-secao {
+    align-items: center;
+  }
+  .app-tela-financeira:where(app-contas, app-movimentacoes) .titulo-secao {
+    gap: 16px;
+  }
+  .app-tela-financeira:where(app-categorias, app-contas) .titulo-secao {
+    margin-bottom: 24px;
+  }
+  .app-tela-financeira:where(app-contas, app-orcamentos, app-transferencias) h2 {
+    font-size: 24px;
+  }
+  .app-tela-financeira:where(app-contas, app-movimentacoes) h2 {
+    letter-spacing: -0.4px;
+  }
+  .app-tela-financeira:where(app-contas, app-transferencias) form {
+    display: flex;
+    flex-direction: column;
+  }
+  .app-tela-financeira:where(app-categorias, app-contas, app-movimentacoes, app-transferencias)
+    mat-form-field {
+    width: 100%;
+  }
+  .app-tela-financeira:where(app-categorias, app-contas, app-orcamentos, app-transferencias)
+    .identidade {
+    display: flex;
+    align-items: center;
+  }
+  .app-tela-financeira:where(app-contas, app-orcamentos) .identidade {
+    gap: 16px;
+  }
+  .app-tela-financeira:where(app-categorias, app-contas, app-transferencias) .identidade {
+    min-width: 0;
+  }
+  .app-tela-financeira:where(app-contas, app-transferencias) .nome {
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .app-tela-financeira:where(app-categorias, app-contas, app-transferencias) .nome {
+    overflow-wrap: anywhere;
+  }
+  .app-tela-financeira:where(app-categorias, app-movimentacoes, app-orcamentos, app-transferencias)
+    h1 {
+    margin: 0;
+  }
+  .app-tela-financeira:where(app-categorias, app-movimentacoes, app-orcamentos, app-transferencias)
+    h2 {
+    margin: 0;
+    font-weight: 750;
+  }
+  .app-tela-financeira:where(app-categorias, app-movimentacoes, app-orcamentos, app-dashboard) dl {
+    margin: 0;
+  }
+  .app-tela-financeira:where(app-categorias, app-movimentacoes, app-orcamentos) dd {
+    margin: 0;
+    font-weight: 750;
+  }
+  .app-tela-financeira:where(app-categorias, app-movimentacoes, app-orcamentos, app-transferencias)
+    .cabecalho {
+    padding-right: 110px;
+  }
+  .app-tela-financeira:where(app-categorias, app-orcamentos, app-transferencias) .cabecalho p {
+    margin-top: 8px;
+  }
+  .app-tela-financeira:where(app-categorias, app-movimentacoes, app-orcamentos, app-transferencias)
+    .cabecalho
+    p {
+    font-size: 20px;
+    color: #52648e;
+  }
+  .app-tela-financeira:where(app-categorias, app-movimentacoes) section {
+    padding: 22px;
+  }
+  .app-tela-financeira:where(app-categorias, app-movimentacoes, app-transferencias) section {
+    box-shadow:
+      0 3px 5px rgba(22, 55, 112, 0.0196078431),
+      0 8px 20px rgba(39, 83, 173, 0.0392156863);
+  }
+  .app-tela-financeira:where(app-categorias, app-movimentacoes) h2 {
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+  }
+  .app-tela-financeira:where(app-categorias, app-transferencias) h2 {
+    line-height: 1.25;
+  }
+  .app-tela-financeira:where(app-categorias, app-orcamentos, app-transferencias) h2 {
+    letter-spacing: -0.5px;
+  }
+  .app-tela-financeira:where(app-categorias, app-orcamentos, app-transferencias) .titulo-secao {
+    align-items: flex-start;
+  }
+  .app-tela-financeira:where(app-categorias, app-movimentacoes, app-transferencias) mat-form-field {
+    min-width: 0;
+  }
+  .app-tela-financeira:where(app-categorias, app-orcamentos) dd {
+    line-height: 1;
+  }
+  .app-tela-financeira:where(app-categorias, app-movimentacoes, app-orcamentos) table {
+    border-collapse: collapse;
+    width: 100%;
+    text-align: left;
+  }
+  .app-tela-financeira:where(app-categorias, app-orcamentos) th {
+    background: #eaf0fd;
+  }
+  .app-tela-financeira:where(app-categorias, app-transferencias) .identidade {
+    gap: 20px;
+  }
+  .app-tela-financeira:where(app-categorias, app-movimentacoes) .vazio {
+    color: #63769d;
+  }
+  .app-tela-financeira:where(app-movimentacoes, app-transferencias) section {
+    border: 1px solid #e4eafa;
+    border-radius: 20px;
+  }
+  .app-tela-financeira:where(app-orcamentos, app-transferencias) .titulo-secao {
+    gap: 18px;
+  }
+  .app-tela-financeira:where(app-orcamentos, app-transferencias) .vazio {
+    color: #627399;
+  }
+  .app-tela-financeira:where(app-movimentacoes, app-orcamentos) table {
+    font-size: 14px;
+  }
+  .app-tela-financeira:where(app-movimentacoes, app-orcamentos) th {
+    white-space: nowrap;
+  }
+
+  // Iconografia de títulos compartilhada entre histórico e transferências.
+  .app-tela-financeira:where(app-movimentacoes) h2 > mat-icon.mat-icon,
+  .app-tela-financeira:where(app-movimentacoes) .titulo-historico > mat-icon.mat-icon,
+  .app-tela-financeira:where(app-transferencias) .painel-saldos h2 mat-icon.mat-icon {
+    color: #0056ff;
+    width: 30px;
+    height: 30px;
+    font-size: 30px;
+  }
+
+  .app-tela-financeira:where(
+    app-contas,
+    app-categorias,
+    app-transferencias,
+    app-movimentacoes,
+    app-orcamentos
+  ) {
+    display: flex;
+    flex-direction: column;
+    color: #090e37;
+  }
+
+  // Ações principais: cores e tipografia comuns; dimensões específicas continuam nas telas.
+  .app-tela-financeira:where(app-movimentacoes) .nova,
+  .app-tela-financeira:where(app-movimentacoes) .filtros button,
+  .app-tela-financeira:where(app-categorias) form > button,
+  .app-tela-financeira:where(app-transferencias) button[type='submit'],
+  .app-tela-financeira:where(app-orcamentos) .novo {
+    @include mat.button-overrides(
+      (
+        filled-container-color: #0056ff,
+        filled-label-text-color: white,
+      )
+    );
+  }
+  .app-tela-financeira:where(app-movimentacoes) .nova,
+  .app-tela-financeira:where(app-movimentacoes) .filtros button,
+  .app-tela-financeira:where(app-categorias) form > button,
+  .app-tela-financeira:where(app-transferencias) button[type='submit'] {
+    font-size: 16px;
+  }
+  .app-tela-financeira:where(app-movimentacoes) .nova,
+  .app-tela-financeira:where(app-movimentacoes) .filtros button,
+  .app-tela-financeira:where(app-orcamentos) .novo {
+    border-radius: 28px;
+  }
+  .app-tela-financeira:where(app-movimentacoes, app-orcamentos) .tabela-rolagem {
+    overflow: auto;
+  }
+  .app-tela-financeira:where(app-movimentacoes, app-orcamentos) .tabela-rolagem:focus-visible {
+    outline: 2px solid #0056ff;
+    outline-offset: 3px;
+  }
+}

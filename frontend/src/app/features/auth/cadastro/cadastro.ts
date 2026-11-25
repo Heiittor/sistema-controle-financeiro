@@ -10,6 +10,7 @@ import { tratarErroDeEnvio } from '../../../shared/forms/erros-do-servidor';
 
 @Component({
   selector: 'app-cadastro',
+  host: { class: 'app-auth app-feedback' },
   imports: [ReactiveFormsModule, RouterLink, MatFormFieldModule, MatInputModule, MatButtonModule],
   templateUrl: './cadastro.html',
   styleUrl: './cadastro.scss',

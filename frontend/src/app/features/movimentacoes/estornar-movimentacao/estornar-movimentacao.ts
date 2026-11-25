@@ -19,6 +19,7 @@ export type ResultadoEstorno = 'ok' | 'recarregar';
 
 @Component({
   selector: 'app-estornar-movimentacao',
+  host: { class: 'app-feedback' },
   imports: [MatDialogModule, MatButtonModule, MoedaPipe],
   templateUrl: './estornar-movimentacao.html',
   styleUrl: './estornar-movimentacao.scss',

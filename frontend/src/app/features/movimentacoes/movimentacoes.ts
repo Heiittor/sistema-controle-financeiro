@@ -41,6 +41,7 @@ interface FiltroAplicado {
 
 @Component({
   selector: 'app-movimentacoes',
+  host: { class: 'app-tela-financeira app-feedback' },
   imports: [
     ReactiveFormsModule,
     RouterLink,

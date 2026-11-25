@@ -1,0 +1,88 @@
+@let d = dados();
+<section class="cartao evolucao" aria-labelledby="titulo-evolucao">
+  <div class="titulo-grafico">
+    <h2 id="titulo-evolucao"><mat-icon>bar_chart</mat-icon>Receitas x despesas</h2>
+    <div class="chaves">
+      <span><i class="azul"></i>Receitas</span><span><i class="vermelho"></i>Despesas</span>
+    </div>
+  </div>
+  <app-grafico-dashboard
+    [configuracao]="d.linha"
+    [altura]="230"
+    descricao="Evolução mensal de receitas e despesas. Os valores estão na tabela abaixo."
+  />
+  <div class="dados-mensais">
+    <p class="sr-only">{{ formatarData(d.inicioSerie) }} a {{ formatarData(d.fimSerie) }}</p>
+    <details>
+      <summary>Ver valores por mês</summary>
+      <div
+        class="tabela"
+        tabindex="0"
+        role="region"
+        aria-label="Tabela de receitas e despesas mensais"
+      >
+        <table>
+          <caption>
+            Receitas e despesas mensais
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Mês</th>
+              <th scope="col">Receitas</th>
+              <th scope="col">Despesas</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (mes of d.serie; track mes.mes) {
+              <tr>
+                <th scope="row">{{ rotuloMes(mes.mes) }}</th>
+                <td>{{ mes.receitas | moeda }}</td>
+                <td>{{ mes.despesas | moeda }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+</section>
+<section class="cartao categorias" aria-labelledby="titulo-categorias">
+  <h2 id="titulo-categorias"><mat-icon>pie_chart</mat-icon>Despesas por categoria</h2>
+  @if (d.resumo.porCategoria.length === 0) {
+    <p class="vazio">Nenhuma despesa não estornada neste período.</p>
+  } @else {
+    <div class="distribuicao">
+      <div class="rosca">
+        <app-grafico-dashboard
+          [configuracao]="d.rosca"
+          [altura]="240"
+          [destaque]="selecionada()"
+          descricao="Distribuição das despesas. Categorias e valores estão na legenda ao lado."
+        />
+        <div class="centro-rosca" aria-hidden="true">
+          <strong>{{ d.resumo.totalDespesas | moeda }}</strong
+          ><span>Total</span>
+        </div>
+      </div>
+      <ul class="legenda" aria-label="Valores por categoria; selecione para destacar">
+        @for (categoria of d.resumo.porCategoria; track categoria.categoriaId; let i = $index) {
+          <li>
+            <button
+              type="button"
+              [attr.aria-pressed]="selecionada() === i"
+              (click)="selecionar.emit(selecionada() === i ? null : i)"
+            >
+              <i class="cor" aria-hidden="true" [style.background]="cores[i % cores.length]"></i
+              ><span>{{ categoria.categoriaNome }}</span
+              ><strong
+                [attr.title]="categoria.total | moeda"
+                [attr.aria-label]="categoria.total | moeda"
+                >{{ participacao(categoria.total, d.resumo.totalDespesas) }}</strong
+              >
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+</section>

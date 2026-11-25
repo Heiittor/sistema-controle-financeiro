@@ -5,6 +5,9 @@
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 @use './app/features/contas/autocomplete-tema' as bancos;
+@use './app/shared/estilos/mensagens';
+@use './app/shared/estilos/telas-financeiras' as telas;
+@use './app/features/auth/auth-visual' as auth;
 @include bancos.tema();
 
 html {
@@ -67,3 +70,8 @@ body {
 *::after {
   box-sizing: border-box;
 }
+
+// Fundação visual compartilhada, sem duplicação nos chunks de cada tela.
+@include mensagens.tema();
+@include telas.tema();
+@include auth.tema();

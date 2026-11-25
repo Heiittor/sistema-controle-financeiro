@@ -21,7 +21,15 @@ export interface DadosEdicao {
 
 @Component({
   selector: 'app-editar-movimentacao',
-  imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule, MoedaPipe],
+  host: { class: 'app-feedback' },
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MoedaPipe,
+  ],
   templateUrl: './editar-movimentacao.html',
   styleUrl: './editar-movimentacao.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,7 +45,8 @@ export class EditarMovimentacao {
   protected readonly formatarData = formatarData;
 
   // A categoria precisa ser do mesmo tipo da transação (a API também valida).
-  private readonly tipoCategoria: TipoCategoria = this.transacao.tipo === 'RECEITA' ? 'RECEITA' : 'DESPESA';
+  private readonly tipoCategoria: TipoCategoria =
+    this.transacao.tipo === 'RECEITA' ? 'RECEITA' : 'DESPESA';
 
   // Só descrição e categoria: valor, data, tipo e conta não são editáveis.
   protected readonly form = inject(NonNullableFormBuilder).group({

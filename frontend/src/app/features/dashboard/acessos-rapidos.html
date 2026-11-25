@@ -1,0 +1,22 @@
+<button
+  type="button"
+  class="atalho receita"
+  [disabled]="!habilitado()"
+  (click)="registrar.emit('RECEITA')"
+>
+  <mat-icon aria-hidden="true">south</mat-icon><span>Registrar receita</span>
+</button>
+<button
+  type="button"
+  class="atalho despesa"
+  [disabled]="!habilitado()"
+  (click)="registrar.emit('DESPESA')"
+>
+  <mat-icon aria-hidden="true">north</mat-icon><span>Registrar despesa</span>
+</button>
+<a class="atalho transferir" routerLink="/transferencias"
+  ><mat-icon aria-hidden="true">swap_horiz</mat-icon><span>Transferir</span></a
+>
+<a class="atalho orcamentos" routerLink="/orcamentos"
+  ><mat-icon aria-hidden="true">calendar_month</mat-icon><span>Orçamentos</span></a
+>

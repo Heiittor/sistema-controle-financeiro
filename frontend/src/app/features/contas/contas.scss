@@ -1,40 +1,37 @@
-@use '@angular/material' as mat;
-@use '../../shared/estilos/mensagens';
-
 :host {
-  display: flex;
-  flex-direction: column;
   gap: 24px;
-  color: #090e37;
 }
+
 .cabecalho-contas {
   margin: 0 120px 0 0;
 }
+
 h1 {
-  font-size: 40px;
-  line-height: 1.2;
-  font-weight: 750;
-  letter-spacing: -1px;
   margin: 0 0 10px;
 }
+
 .cabecalho-contas p {
   font-size: 20px;
 }
+
 p {
-  margin: 0;
   color: #59698f;
   line-height: 1.4;
 }
+
 section {
-  padding: 24px;
   border: 1px solid #fff;
   border-radius: 16px;
-  background: linear-gradient(125deg, #ffffffdf, #f2f6ffb3);
+  background: linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0.8745098039),
+    rgba(242, 246, 255, 0.7019607843)
+  );
   box-shadow:
-    0 3px 4px #16377008,
-    0 12px 28px #2753ad0c;
-  min-width: 0;
+    0 3px 4px rgba(22, 55, 112, 0.031372549),
+    0 12px 28px rgba(39, 83, 173, 0.0470588235);
 }
+
 .nova-conta {
   position: relative;
   min-height: 280px;
@@ -43,13 +40,11 @@ section {
   column-gap: 32px;
   align-content: start;
 }
+
 .titulo-secao {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
   min-width: 0;
 }
+
 .icone-secao {
   display: grid;
   place-items: center;
@@ -60,78 +55,70 @@ section {
   color: #0056ff;
   background: linear-gradient(140deg, #e5eeff, #cddfff);
 }
+
 .icone-secao mat-icon {
   width: 28px;
   height: 28px;
   font-size: 28px;
 }
+
 h2 {
-  font-size: 24px;
   font-weight: 700;
-  letter-spacing: -0.4px;
   line-height: 1.2;
   margin: 0 0 4px;
 }
+
 .titulo-secao p {
   font-size: 16px;
 }
+
 .nova-conta .titulo-secao {
   grid-column: 1/-1;
   padding-right: 260px;
 }
+
 form {
   grid-column: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
   gap: 20px;
   position: relative;
   z-index: 1;
 }
+
 .campo-conta {
   min-width: 0;
 }
+
 label {
   display: block;
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 8px;
 }
-mat-form-field {
-  width: 100%;
-  @include mat.form-field-overrides(
-    (
-      outlined-container-shape: 15px,
-      outlined-outline-color: #bec9e1,
-      outlined-focus-outline-color: #0056ff,
-      outlined-focus-outline-width: 2px,
-      outlined-hover-outline-color: #8daddf,
-      outlined-input-text-color: #0b123c,
-      outlined-input-text-placeholder-color: #66759b,
-      container-height: 48px,
-      container-vertical-padding: 11px,
-    )
-  );
-}
+
 input {
   font-size: 16px;
   letter-spacing: 0;
 }
+
 mat-form-field app-logo-banco {
   margin-inline: 12px;
   --banco-largura: 48px;
   --banco-altura: 40px;
 }
+
 mat-icon[matSuffix] {
   color: #6576a8;
   margin-right: 6px;
 }
+
 mat-hint {
   font-size: 12px;
   color: #66769b;
   line-height: 1.5;
   padding-top: 4px;
 }
+
 button[type='submit'] {
   min-height: 48px;
   border-radius: 15px;
@@ -139,12 +126,14 @@ button[type='submit'] {
   color: white;
   font-size: 16px;
   font-weight: 600;
-  box-shadow: 0 2px 4px #003cc01a;
+  box-shadow: 0 2px 4px rgba(0, 60, 192, 0.1019607843);
 }
+
 button[type='submit']:disabled {
   background: #c7d4ee;
   color: #57688d;
 }
+
 .sugestao-banco {
   display: flex;
   align-items: center;
@@ -152,12 +141,14 @@ button[type='submit']:disabled {
   min-height: 44px;
   padding: 0;
 }
+
 .sugestao-banco app-logo-banco {
   --banco-largura: 56px;
   --banco-altura: 40px;
   --banco-respiro: 4px;
   --banco-raio: 10px;
 }
+
 .carteira-decorativa {
   position: absolute;
   width: 34%;
@@ -168,6 +159,7 @@ button[type='submit']:disabled {
   transform: translateY(-42%);
   pointer-events: none;
 }
+
 .contas {
   list-style: none;
   padding: 0;
@@ -176,6 +168,7 @@ button[type='submit']:disabled {
   flex-direction: column;
   gap: 12px;
 }
+
 .contas li {
   min-height: 72px;
   display: flex;
@@ -185,25 +178,16 @@ button[type='submit']:disabled {
   padding: 12px 16px;
   border: 1px solid #d8e1f5;
   border-radius: 14px;
-  background: #ffffff8c;
+  background: rgba(255, 255, 255, 0.5490196078);
 }
-.identidade {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  min-width: 0;
-}
+
 .identidade app-logo-banco {
   --banco-largura: 48px;
   --banco-altura: 44px;
   --banco-respiro: 3px;
   --banco-raio: 14px;
 }
-.nome {
-  font-size: 20px;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
+
 .saldo {
   display: flex;
   align-items: center;
@@ -217,19 +201,23 @@ button[type='submit']:disabled {
   font-weight: 750;
   white-space: nowrap;
 }
+
 .saldo small {
   color: #576580;
   font-size: 14px;
   font-weight: 400;
 }
+
 .vazio {
   margin: 0;
   padding: 12px 0;
 }
+
 form .erro,
 form .aviso {
   margin: 0;
 }
+
 @media (min-width: 1500px) {
   form {
     display: grid;
@@ -258,11 +246,6 @@ form .aviso {
   .carteira-decorativa {
     width: 30%;
     right: 20px;
-  }
-}
-@media (max-width: 1000px) {
-  h1 {
-    font-size: 32px;
   }
 }
 @media (max-width: 760px) {

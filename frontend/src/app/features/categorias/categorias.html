@@ -67,22 +67,22 @@
         <p class="estado-resumo">Resumo indisponível. Tente carregar a lista novamente.</p>
       }
       @case ('pronto') {
-        <dl class="indicadores">
+        <div role="group" class="indicadores" aria-label="Indicadores">
           <div class="indicador receita">
             <span class="icone-indicador"><mat-icon aria-hidden="true">south</mat-icon></span>
-            <div>
+            <dl>
               <dt>Categorias de receita</dt>
               <dd>{{ totalReceitas() }}</dd>
-            </div>
+            </dl>
           </div>
           <div class="indicador despesa">
             <span class="icone-indicador"><mat-icon aria-hidden="true">north</mat-icon></span>
-            <div>
+            <dl>
               <dt>Categorias de despesa</dt>
               <dd>{{ totalDespesas() }}</dd>
-            </div>
+            </dl>
           </div>
-        </dl>
+        </div>
         <p class="escopo">
           {{
             filtro() === null

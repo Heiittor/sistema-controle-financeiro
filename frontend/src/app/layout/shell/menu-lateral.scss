@@ -1,0 +1,213 @@
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.75rem;
+}
+:host-context(.painel) ul {
+  padding: 0 10px;
+}
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 6rem;
+  margin: 0 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.marca mat-icon {
+  flex-shrink: 0;
+}
+
+.secao-menu {
+  margin: 1.5rem 1.25rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3rem;
+  margin-bottom: 0.375rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  color: inherit;
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+.item mat-icon {
+  flex-shrink: 0;
+}
+.item:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.item.ativo {
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: inset 3px 0 white;
+  font-weight: 700;
+}
+
+.item:focus-visible,
+.recolher:focus-visible,
+.fechar:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+.recolher,
+.fechar {
+  color: white;
+}
+
+.recolher {
+  display: block;
+  margin: 1.5rem auto 0;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.fechar {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+}
+:host-context(.recolhida) .marca {
+  justify-content: center;
+  margin-inline: 0.75rem;
+}
+:host-context(.recolhida) .marca-texto,
+:host-context(.recolhida) .rotulo,
+:host-context(.recolhida) .secao-menu {
+  display: none;
+}
+:host-context(.recolhida) nav {
+  padding-top: 1.5rem;
+}
+:host-context(.recolhida) .item {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+@media (max-width: 900px) {
+  .marca {
+    padding-right: 1.5rem;
+  }
+}
+:host-context(.painel) .marca {
+  font-size: 20px;
+  letter-spacing: -0.5px;
+  text-transform: none;
+  border: 0;
+  gap: 12px;
+  margin: 0 28px 18px;
+}
+:host-context(.painel) .marca mat-icon {
+  width: 32px;
+  height: 32px;
+  font-size: 32px;
+  filter: drop-shadow(0 0 8px #8fb6ff);
+}
+:host-context(.painel) .secao-menu {
+  display: none;
+}
+:host-context(.painel) .item {
+  min-height: 50px;
+  margin-bottom: 8px;
+  border-radius: 13px;
+  gap: 16px;
+  padding: 12px 18px;
+}
+:host-context(.painel) .item.ativo {
+  background: #0057ff;
+  box-shadow: none;
+}
+:host-context(.painel) .item mat-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+:host-context(.painel) .recolher {
+  margin-top: 18px;
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+}
+:host-context(.painel) :host-context(.sidebar.recolhida) .marca {
+  margin-inline: 12px;
+}
+:host-context(.painel) :host-context(.sidebar.recolhida) .item {
+  padding-inline: 0;
+}
+:host-context(.painel) :host-context(.sidebar.recolhida) .sessao-painel p {
+  display: none;
+}
+:host-context(.painel) :host-context(.sidebar.recolhida) .sair-painel {
+  justify-content: center;
+  font-size: 0;
+  padding-inline: 0;
+}
+:host-context(.painel) .sessao-painel {
+  margin: auto 10px 0;
+  padding-top: 28px;
+}
+:host-context(.painel) .sessao-painel p,
+:host-context(.painel) .sair-painel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1333333333);
+  border-radius: 16px;
+}
+:host-context(.painel) .sessao-painel p {
+  margin: 0;
+  font-size: 13px;
+}
+:host-context(.painel) .sessao-painel p mat-icon {
+  color: #e0eaff;
+}
+:host-context(.painel) .sair-painel {
+  width: 100%;
+  color: white;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+:host-context(.painel) .sair-painel:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+.marca-painel {
+  width: 34px;
+  height: 36px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 8px #8fb6ff);
+}
+
+:host-context(.tela-movimentacoes) .secao-menu,
+:host-context(.tela-categorias) .secao-menu,
+:host-context(.tela-transferencias) .secao-menu,
+:host-context(.tela-orcamentos) .secao-menu {
+  display: block;
+  margin: 12px 18px 22px;
+  font-size: 10px;
+}
+:host-context(.tela-contas) .marca {
+  font-size: 14px;
+  text-transform: uppercase;
+}
+:host-context(.tela-contas) :host-context(.sidebar.recolhida) .marca {
+  padding-inline: 0;
+}
+:host-context(.tela-contas) :host-context(.sidebar.recolhida) .sessao-painel {
+  margin-inline: 10px;
+}

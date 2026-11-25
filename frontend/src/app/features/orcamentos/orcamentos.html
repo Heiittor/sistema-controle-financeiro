@@ -14,29 +14,29 @@
 }
 @if (estado() === 'pronto') {
   @if (resultado(); as r) {
-    <dl class="indicadores" aria-label="Resumo de todo o mês selecionado">
+    <div role="group" class="indicadores" aria-label="Resumo de todo o mês selecionado">
       <div class="indicador ativos">
         <span class="icone-indicador"><mat-icon aria-hidden="true">calendar_month</mat-icon></span>
-        <div>
+        <dl>
           <dt>Orçamentos ativos</dt>
           <dd>{{ r.resumo.ativos }}</dd>
-        </div>
+        </dl>
       </div>
       <div class="indicador dentro">
         <span class="icone-indicador"><mat-icon aria-hidden="true">check</mat-icon></span>
-        <div>
+        <dl>
           <dt>Dentro do planejado</dt>
           <dd>{{ r.resumo.dentroDoPlanejado }}</dd>
-        </div>
+        </dl>
       </div>
       <div class="indicador acima">
         <span class="icone-indicador"><mat-icon aria-hidden="true">warning</mat-icon></span>
-        <div>
+        <dl>
           <dt>Acima do limite</dt>
           <dd>{{ r.resumo.acimaDoLimite }}</dd>
-        </div>
+        </dl>
       </div>
-    </dl>
+    </div>
   }
 }
 <section class="lista" aria-labelledby="titulo-lista">

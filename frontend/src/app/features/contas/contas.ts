@@ -30,6 +30,7 @@ import { LogoBanco } from './logo-banco';
 
 @Component({
   selector: 'app-contas',
+  host: { class: 'app-tela-financeira app-feedback' },
   imports: [
     ReactiveFormsModule,
     MatFormFieldModule,

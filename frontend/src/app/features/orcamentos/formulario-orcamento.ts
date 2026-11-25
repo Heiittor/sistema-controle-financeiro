@@ -21,6 +21,7 @@ export interface DadosOrcamento {
 }
 @Component({
   selector: 'app-formulario-orcamento',
+  host: { class: 'app-feedback' },
   imports: [
     ReactiveFormsModule,
     MatButtonModule,

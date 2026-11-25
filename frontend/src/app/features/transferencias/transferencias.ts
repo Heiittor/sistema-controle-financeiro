@@ -43,6 +43,7 @@ const diferenteDaOrigem: ValidatorFn = (controle): ValidationErrors | null => {
 
 @Component({
   selector: 'app-transferencias',
+  host: { class: 'app-tela-financeira app-feedback' },
   imports: [
     ReactiveFormsModule,
     RouterLink,

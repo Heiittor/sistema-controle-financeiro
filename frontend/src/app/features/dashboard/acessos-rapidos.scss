@@ -1,0 +1,62 @@
+:host {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.atalho {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+  min-height: 52px;
+  border: 1px solid #dce5f7;
+  border-radius: 14px;
+  font: inherit;
+  font-weight: 600;
+  color: #16418c;
+  background: #edf3ff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.atalho.receita {
+  color: #11643b;
+  background: #eaf9f3;
+}
+
+.atalho.despesa {
+  color: #a82440;
+  background: #fff0f2;
+}
+
+.atalho mat-icon {
+  flex-shrink: 0;
+}
+
+.atalho:focus-visible {
+  outline: 2px solid #0056ff;
+  outline-offset: 3px;
+}
+
+.atalho:hover:not(:disabled) {
+  box-shadow: 0 3px 10px rgba(23, 62, 133, 0.0784313725);
+}
+
+.atalho:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+@media (max-width: 1000px) {
+  :host {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 480px) {
+  :host {
+    grid-template-columns: 1fr;
+  }
+}

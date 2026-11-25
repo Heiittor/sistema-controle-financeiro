@@ -24,6 +24,7 @@ import { CategoriasService } from './categorias.service';
 
 @Component({
   selector: 'app-categorias',
+  host: { class: 'app-tela-financeira app-feedback' },
   imports: [
     ReactiveFormsModule,
     MatFormFieldModule,

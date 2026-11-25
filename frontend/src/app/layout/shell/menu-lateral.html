@@ -1,0 +1,110 @@
+<p class="marca">
+  @if (
+    titulo() === 'Dashboard' ||
+    titulo() === 'Contas' ||
+    titulo() === 'Movimentações' ||
+    titulo() === 'Categorias' ||
+    titulo() === 'Transferências' ||
+    titulo() === 'Orçamentos'
+  ) {
+    <svg class="marca-painel" viewBox="0 0 54 58" aria-hidden="true">
+      <g fill="currentColor">
+        <rect x="2" y="40" width="12" height="16" rx="1" />
+        <rect x="19" y="29" width="12" height="27" rx="1" />
+        <rect x="36" y="19" width="12" height="37" rx="1" />
+      </g>
+      <path
+        d="m3 31 15-12 9 4L45 5m-10 0h10v10"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="4"
+        stroke-linejoin="round"
+      />
+    </svg>
+  } @else {
+    <mat-icon>account_balance</mat-icon>
+  }
+  <span class="marca-texto">
+    @if (titulo() === 'Dashboard') {
+      Finanças
+    } @else {
+      Controle<br />Financeiro
+    }
+  </span>
+</p>
+
+@if (compacto()) {
+  <button
+    mat-icon-button
+    type="button"
+    class="fechar"
+    aria-label="Fechar menu"
+    (click)="fechar.emit()"
+  >
+    <mat-icon>close</mat-icon>
+  </button>
+}
+
+<nav aria-label="Principal">
+  <p class="secao-menu" aria-hidden="true">Finanças pessoais</p>
+  <ul>
+    @for (item of itens; track item.rota) {
+      <li>
+        <a
+          class="item"
+          [attr.aria-label]="
+            titulo() === 'Dashboard' && item.rota === '/' ? 'Visão geral' : item.rotulo
+          "
+          [attr.title]="recolhida() && !compacto() ? item.rotulo : null"
+          [routerLink]="item.rota"
+          routerLinkActive="ativo"
+          ariaCurrentWhenActive="page"
+          [routerLinkActiveOptions]="{ exact: item.rota === '/' }"
+          (click)="compacto() && fechar.emit()"
+        >
+          <mat-icon>{{
+            (titulo() === 'Dashboard' ||
+              titulo() === 'Movimentações' ||
+              titulo() === 'Categorias' ||
+              titulo() === 'Transferências' ||
+              titulo() === 'Orçamentos') &&
+            item.rota === '/'
+              ? 'home'
+              : (titulo() === 'Movimentações' || titulo() === 'Categorias') &&
+                  item.rota === '/movimentacoes'
+                ? 'swap_horiz'
+                : titulo() === 'Categorias' && item.rota === '/categorias'
+                  ? 'hub'
+                  : titulo() === 'Orçamentos' && item.rota === '/orcamentos'
+                    ? 'calendar_month'
+                    : item.icone
+          }}</mat-icon>
+          <span class="rotulo">{{
+            titulo() === 'Dashboard' && item.rota === '/' ? 'Visão geral' : item.rotulo
+          }}</span>
+        </a>
+      </li>
+    }
+  </ul>
+</nav>
+@if (!compacto()) {
+  <button
+    mat-icon-button
+    type="button"
+    class="recolher"
+    [attr.aria-label]="recolhida() ? 'Expandir menu' : 'Recolher menu'"
+    [attr.aria-expanded]="!recolhida()"
+    aria-controls="menu-principal"
+    (click)="alternar.emit()"
+  >
+    <mat-icon>{{ recolhida() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+  </button>
+}
+@if (titulo() === 'Dashboard' || titulo() === 'Contas') {
+  <div class="sessao-painel">
+    <p><mat-icon>account_circle</mat-icon>Minha conta</p>
+    <button type="button" class="sair-painel" (click)="sair.emit()">
+      <mat-icon>logout</mat-icon>Sair
+    </button>
+  </div>
+}

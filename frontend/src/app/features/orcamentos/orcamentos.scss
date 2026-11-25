@@ -1,49 +1,24 @@
-﻿@use '@angular/material' as mat;
-@use '../../shared/estilos/mensagens';
 :host {
-  display: flex;
-  flex-direction: column;
   gap: 22px;
-  color: #090e37;
 }
-h1,
-h2,
-p,
-dl,
-dd {
-  margin: 0;
-}
-h1 {
-  font-size: 40px;
-  font-weight: 750;
-  line-height: 1.2;
-  letter-spacing: -1px;
-}
-.cabecalho {
-  padding-right: 110px;
-}
-.cabecalho p {
-  font-size: 20px;
-  color: #52648e;
-  margin-top: 8px;
-}
+
 .acoes {
   display: flex;
   justify-content: flex-end;
 }
+
 .novo {
-  background: #0056ff;
-  color: white;
-  border-radius: 28px;
   min-height: 46px;
   min-width: 220px;
   font-size: 17px;
 }
+
 .indicadores {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
 }
+
 .indicador {
   display: flex;
   align-items: flex-start;
@@ -53,15 +28,19 @@ h1 {
   border-radius: 16px;
   min-width: 0;
 }
+
 .ativos {
   background: linear-gradient(115deg, #edf4ff, #dfebff);
 }
+
 .dentro {
   background: linear-gradient(115deg, #effbf4, #e5f8f1);
 }
+
 .acima {
   background: linear-gradient(115deg, #fff4f5, #fceaf0);
 }
+
 .icone-indicador {
   display: grid;
   place-items: center;
@@ -72,39 +51,44 @@ h1 {
   background: #d3e4ff;
   color: #0056ff;
 }
+
 .icone-indicador mat-icon {
   width: 32px;
   height: 32px;
   font-size: 32px;
 }
+
 .dentro .icone-indicador {
   color: white;
   background: linear-gradient(#4ed37a, #009932);
   border: 5px solid #b4f0cd;
   border-radius: 50%;
 }
+
 .acima .icone-indicador {
   color: white;
   background: linear-gradient(#ff9aa8, #f61739);
 }
+
 dt {
   font-size: 16px;
   font-weight: 650;
   margin: 2px 0 10px;
 }
+
 dd {
   font-size: 36px;
-  font-weight: 750;
-  line-height: 1;
 }
+
 .lista {
   min-width: 0;
   padding: 24px;
   border: 1px solid #e1e8fa;
   border-radius: 20px;
-  background: #ffffffb8;
-  box-shadow: 0 8px 22px #2753ad08;
+  background: rgba(255, 255, 255, 0.7215686275);
+  box-shadow: 0 8px 22px rgba(39, 83, 173, 0.031372549);
 }
+
 .titulo-lista {
   display: flex;
   justify-content: space-between;
@@ -112,11 +96,7 @@ dd {
   align-items: center;
   margin-bottom: 22px;
 }
-.titulo-secao {
-  display: flex;
-  align-items: flex-start;
-  gap: 18px;
-}
+
 .titulo-secao > mat-icon {
   color: #0056ff;
   width: 40px;
@@ -124,81 +104,64 @@ dd {
   font-size: 40px;
   flex-shrink: 0;
 }
-h2 {
-  font-size: 24px;
-  font-weight: 750;
-  letter-spacing: -0.5px;
-}
+
 .titulo-secao p {
   color: #52648e;
   margin-top: 4px;
   font-size: 17px;
 }
+
 mat-form-field {
   width: 260px;
   flex-shrink: 0;
-  @include mat.form-field-overrides(
-    (
-      outlined-container-shape: 12px,
-      outlined-outline-color: #c4d1ee,
-      outlined-focus-outline-color: #0056ff,
-      container-height: 48px,
-      container-vertical-padding: 11px,
-    )
-  );
 }
+
 mat-icon[matPrefix] {
   margin-inline: 12px 8px;
   color: #102760;
 }
+
 input {
   min-width: 0;
 }
+
 .periodo {
   font-size: 12px;
   color: #627399;
   margin-bottom: 18px;
 }
+
 .tabela-rolagem {
-  overflow: auto;
   border-radius: 8px;
 }
-.tabela-rolagem:focus-visible {
-  outline: 2px solid #0056ff;
-  outline-offset: 3px;
-}
-table {
-  border-collapse: collapse;
-  text-align: left;
-  width: 100%;
-  font-size: 14px;
-}
+
 th {
-  background: #eaf0fd;
   color: #32466f;
   padding: 10px;
-  white-space: nowrap;
 }
+
 td {
   padding: 16px 10px;
   border-bottom: 1px solid #e5ebf7;
 }
+
 .numero {
   text-align: right;
   white-space: nowrap;
 }
+
 .mes {
   white-space: nowrap;
 }
+
 .identidade {
-  display: flex;
-  align-items: center;
-  gap: 16px;
   min-width: 150px;
 }
+
 .identidade strong {
   overflow-wrap: anywhere;
 }
+
 .icone-categoria {
   display: grid;
   place-items: center;
@@ -209,17 +172,21 @@ td {
   background: #e5edff;
   color: #0056ff;
 }
+
 .icone-categoria[data-icone='restaurant'] {
   background: #ffedda;
   color: #ff7517;
 }
+
 .icone-categoria[data-icone='favorite'] {
   background: #eee2ff;
   color: #762dc4;
 }
+
 .progresso {
   min-width: 180px;
 }
+
 .barra {
   height: 10px;
   background: #dce3f2;
@@ -227,12 +194,14 @@ td {
   overflow: hidden;
   margin-top: 7px;
 }
+
 .barra span {
   display: block;
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(#49d26a, #03a137);
 }
+
 .progresso small {
   display: block;
   margin-top: 5px;
@@ -240,6 +209,7 @@ td {
   font-size: 11px;
   white-space: nowrap;
 }
+
 .situacao {
   display: inline-flex;
   align-items: center;
@@ -250,25 +220,31 @@ td {
   border-radius: 24px;
   white-space: nowrap;
 }
+
 .situacao mat-icon {
   width: 20px;
   height: 20px;
   font-size: 20px;
 }
+
 .atencao .barra span {
   background: linear-gradient(#f2c342, #e79a08);
 }
+
 .atencao .situacao {
   background: #fff2ce;
   color: #936000;
 }
+
 .ultrapassado .barra span {
   background: linear-gradient(#ff6b78, #f01129);
 }
+
 .ultrapassado .situacao {
   background: #ffe3e9;
   color: #e31739;
 }
+
 .editar {
   width: 42px;
   height: 42px;
@@ -277,6 +253,7 @@ td {
   color: #0056ff;
   background: #e6eeff;
 }
+
 .paginacao {
   display: flex;
   align-items: center;
@@ -287,12 +264,14 @@ td {
   font-size: 14px;
   font-weight: 600;
 }
+
 .paginacao button {
   border-color: #c7d2ea;
   border-radius: 24px;
   min-height: 42px;
   min-width: 122px;
 }
+
 .vazio {
   display: flex;
   flex-direction: column;
@@ -300,11 +279,12 @@ td {
   align-items: center;
   padding: 30px 10px;
   text-align: center;
-  color: #627399;
 }
+
 .vazio mat-icon {
   color: #0056ff;
 }
+
 @media (max-width: 1150px) {
   .titulo-lista {
     flex-wrap: wrap;
@@ -315,11 +295,6 @@ td {
   }
   dt {
     font-size: 14px;
-  }
-}
-@media (max-width: 1000px) {
-  h1 {
-    font-size: 32px;
   }
 }
 @media (max-width: 600px) {
